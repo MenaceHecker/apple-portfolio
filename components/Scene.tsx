@@ -139,7 +139,7 @@ useEffect(() => {
 export default function Scene() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
-      <Canvas dpr={[1, 2]}>
+      <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
         <CameraRig />
         <ambientLight intensity={0.4} />
         <directionalLight position={[3, 4, 2]} intensity={1.2} />
