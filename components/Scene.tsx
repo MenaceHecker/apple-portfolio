@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Environment, PerspectiveCamera, Line } from "@react-three/drei";
 import { useSceneState } from "@/components/SceneState";
 import * as THREE from "three";
@@ -369,6 +369,28 @@ function CameraRig() {
 
 export default function Scene() {
   const { activeProject } = useSceneState();
+  const [activeSection, setActiveSection] = useState("home");
+
+  useEffect(() => {
+  const ids = Object.keys(MATERIAL_MOODS);
+
+  const triggers = ids.map((id) => {
+    const el = document.getElementById(id);
+    if (!el) return null;
+
+    return ScrollTrigger.create({
+      trigger: el,
+      start: "top center",
+      end: "bottom center",
+      onEnter: () => setActiveSection(id),
+      onEnterBack: () => setActiveSection(id),
+    });
+  });
+
+  return () => triggers.forEach((t) => t?.kill());
+}, []);
+
+
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
