@@ -68,42 +68,61 @@ function CameraRig() {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
-  useEffect(() => {
-    const cam = cameraRef.current;
-    if (!cam) return;
+useEffect(() => {
+  const cam = cameraRef.current;
+  if (!cam) return;
 
-    // Scroll-driven camera rail (stub) to be expanded per section next.
-    const t = gsap.timeline({
-      scrollTrigger: {
-        trigger: document.body,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 1,
+  const sections = Object.keys(CAMERA_POSES);
+
+  const triggers = sections.map((id) => {
+    const el = document.getElementById(id);
+    if (!el) return null;
+
+    const pose = CAMERA_POSES[id];
+
+    return ScrollTrigger.create({
+      trigger: el,
+      start: "top center",
+      end: "bottom center",
+      onEnter: () => {
+        gsap.to(cam.position, {
+          x: pose.position[0],
+          y: pose.position[1],
+          z: pose.position[2],
+          duration: 1.2,
+          ease: "power3.out",
+        });
+      },
+      onEnterBack: () => {
+        gsap.to(cam.position, {
+          x: pose.position[0],
+          y: pose.position[1],
+          z: pose.position[2],
+          duration: 1.2,
+          ease: "power3.out",
+        });
       },
     });
+  });
 
-    t.to(cam.position, { z: 5.2, duration: 1 }, 0);
-    t.to(cam.position, { x: 0.6, y: 0.2, duration: 1 }, 0);
+  let raf = 0;
+  const tick = () => {
+    const px = target.current.x;
+    const py = target.current.y;
 
-    let raf = 0;
-    const tick = () => {
-      const px = target.current.x;
-      const py = target.current.y;
+    cam.position.x += px * 0.015;
+    cam.position.y += -py * 0.015;
+    cam.lookAt(0, 0, 0);
 
-      cam.position.x += (0.6 + px * 0.25 - cam.position.x) * 0.06;
-      cam.position.y += (0.2 + -py * 0.18 - cam.position.y) * 0.06;
-      cam.lookAt(0, 0, 0);
-
-      raf = requestAnimationFrame(tick);
-    };
     raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
 
-    return () => {
-      t.scrollTrigger?.kill();
-      t.kill();
-      cancelAnimationFrame(raf);
-    };
-  }, []);
+  return () => {
+    triggers.forEach((t) => t?.kill());
+    cancelAnimationFrame(raf);
+  };
+}, []);
 
     return (
     <PerspectiveCamera
