@@ -1,15 +1,64 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import Navbar from "@/components/Navbar";
+import Scene from "@/components/Scene";
+import Section from "@/components/Section";
+import Hero from "@/components/sections/Hero";
+import Themes from "@/components/sections/Themes";
+import Projects from "@/components/sections/Projects";
+import Experience from "@/components/sections/Experience";
+import Skills from "@/components/sections/Skills";
+import Contact from "@/components/sections/Contact";
 
-type NavSection = { id: string; label: string };
+export default function Page() {
+  const sections = useMemo(
+    () => [
+      { id: "home", label: "Home" },
+      { id: "themes", label: "Themes" },
+      { id: "projects", label: "Projects" },
+      { id: "experience", label: "Experience" },
+      { id: "skills", label: "Skills" },
+      { id: "contact", label: "Contact" },
+    ],
+    []
+  );
 
-function clamp(n: number, a: number, b: number) {
-  return Math.max(a, Math.min(b, n));
-}
+  return (
+    <main className="relative min-h-screen bg-black text-white">
+      <Scene />
 
-export default function Navbar({ sections }: { sections: NavSection[] }) {
-  const [active, setActive] = useState(sections[0]?.id ?? "home");
-  const ids = useMemo(() => sections.map((s) => s.id), [sections]);
+      <Navbar sections={sections} />
 
+      <div className="relative z-10">
+        <Section id="home">
+          <Hero />
+        </Section>
+
+        <Section id="themes">
+          <Themes />
+        </Section>
+
+        <Section id="projects">
+          <Projects />
+        </Section>
+
+        <Section id="experience">
+          <Experience />
+        </Section>
+
+        <Section id="skills">
+          <Skills />
+        </Section>
+
+        <Section id="contact">
+          <Contact />
+        </Section>
+
+        <footer className="px-6 pb-10 pt-2 text-center text-xs text-white/40">
+          © {new Date().getFullYear()} Tushar Mishra
+        </footer>
+      </div>
+    </main>
+  );
 }
