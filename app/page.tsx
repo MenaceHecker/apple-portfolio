@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Scene from "@/components/Scene";
 import Section from "@/components/Section";
@@ -10,6 +10,8 @@ import Projects from "@/components/sections/Projects";
 import Experience from "@/components/sections/Experience";
 import Skills from "@/components/sections/Skills";
 import Contact from "@/components/sections/Contact";
+import type { ProjectId } from "@/lib/projects";
+
 
 export default function Page() {
   const sections = useMemo(
