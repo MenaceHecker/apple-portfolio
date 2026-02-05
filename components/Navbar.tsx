@@ -1,64 +1,82 @@
 "use client";
 
-import { useMemo } from "react";
-import Navbar from "@/components/Navbar";
-import Scene from "@/components/Scene";
-import Section from "@/components/Section";
-import Hero from "@/components/sections/Hero";
-import Themes from "@/components/sections/Themes";
-import Projects from "@/components/sections/Projects";
-import Experience from "@/components/sections/Experience";
-import Skills from "@/components/sections/Skills";
-import Contact from "@/components/sections/Contact";
+import { useEffect, useMemo, useState } from "react";
 
-export default function Page() {
-  const sections = useMemo(
-    () => [
-      { id: "home", label: "Home" },
-      { id: "themes", label: "Themes" },
-      { id: "projects", label: "Projects" },
-      { id: "experience", label: "Experience" },
-      { id: "skills", label: "Skills" },
-      { id: "contact", label: "Contact" },
-    ],
-    []
-  );
+type NavSection = { id: string; label: string };
+
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
+}
+
+export default function Navbar({ sections }: { sections: NavSection[] }) {
+  const [active, setActive] = useState(sections[0]?.id ?? "home");
+  const ids = useMemo(() => sections.map((s) => s.id), [sections]);
+
+  useEffect(() => {
+    const els = ids
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+
+    if (!els.length) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0];
+
+        if (visible?.target?.id) setActive(visible.target.id);
+      },
+      { root: null, rootMargin: "-25% 0px -60% 0px", threshold: [0.05, 0.1, 0.2] }
+    );
+
+    for (const el of els) io.observe(el);
+    return () => io.disconnect();
+  }, [ids]);
+
+  function goTo(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
-    <main className="relative min-h-screen bg-black text-white">
-      <Scene />
+    <div className="sticky top-0 z-20 w-full">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <button
+          onClick={() => goTo("home")}
+          className="text-sm font-medium tracking-tight text-white/90 hover:text-white"
+        >
+          TM
+        </button>
 
-      <Navbar sections={sections} />
+        <nav className="hidden gap-1 rounded-full border border-white/10 bg-black/40 px-2 py-2 backdrop-blur-md sm:flex">
+          {sections.map((s) => {
+            const isActive = s.id === active;
+            return (
+              <button
+                key={s.id}
+                onClick={() => goTo(s.id)}
+                className={[
+                  "rounded-full px-3 py-1.5 text-xs transition",
+                  isActive ? "bg-white/12 text-white" : "text-white/70 hover:text-white",
+                ].join(" ")}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </nav>
 
-      <div className="relative z-10">
-        <Section id="home">
-          <Hero />
-        </Section>
-
-        <Section id="themes">
-          <Themes />
-        </Section>
-
-        <Section id="projects">
-          <Projects />
-        </Section>
-
-        <Section id="experience">
-          <Experience />
-        </Section>
-
-        <Section id="skills">
-          <Skills />
-        </Section>
-
-        <Section id="contact">
-          <Contact />
-        </Section>
-
-        <footer className="px-6 pb-10 pt-2 text-center text-xs text-white/40">
-          © {new Date().getFullYear()} Tushar Mishra
-        </footer>
+        <button
+          onClick={() => goTo("contact")}
+          className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs text-white/90 hover:bg-white/10"
+        >
+          Contact
+        </button>
       </div>
-    </main>
+
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    </div>
   );
 }
