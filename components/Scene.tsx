@@ -1,7 +1,8 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Environment, PerspectiveCamera } from "@react-three/drei";
+import { Environment, PerspectiveCamera, Line } from "@react-three/drei";
+import { useSceneState } from "@/components/SceneState";
 import { Suspense, useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
@@ -49,6 +50,76 @@ const CAMERA_POSES: Record<
   contact: {
     position: [0, 0.2, 6.6],
     lookAt: [0, 0, 0],
+  },
+};
+
+
+
+type NodeSpec = {
+  id: string;
+  label: string;
+  pos: [number, number, number];
+  size: [number, number, number];
+};
+
+type FlowSpec = {
+  from: string;
+  to: string;
+};
+
+const PROJECT_GRAPH: Record<
+  "nexus" | "inboxiq" | "pulseforge",
+  { nodes: NodeSpec[]; flows: FlowSpec[] }
+> = {
+  nexus: {
+    nodes: [
+      { id: "api", label: "Services", pos: [-1.6, 0.3, 0], size: [0.9, 0.35, 0.2] },
+      { id: "prom", label: "Prometheus", pos: [-0.2, 0.6, 0.2], size: [1.1, 0.45, 0.2] },
+      { id: "graf", label: "Grafana", pos: [1.2, 0.7, 0], size: [0.9, 0.35, 0.2] },
+      { id: "elk", label: "ELK", pos: [0.8, -0.1, -0.1], size: [1.0, 0.45, 0.2] },
+      { id: "db", label: "Postgres", pos: [-0.8, -0.35, 0], size: [0.9, 0.35, 0.2] },
+    ],
+    flows: [
+      { from: "api", to: "prom" },
+      { from: "prom", to: "graf" },
+      { from: "api", to: "elk" },
+      { from: "elk", to: "db" },
+    ],
+  },
+
+  inboxiq: {
+    nodes: [
+      { id: "ui", label: "Next.js UI", pos: [-1.5, 0.4, 0], size: [1.0, 0.38, 0.2] },
+      { id: "auth", label: "Auth", pos: [-0.2, 0.8, 0.1], size: [0.85, 0.34, 0.2] },
+      { id: "providers", label: "Gmail/Outlook", pos: [1.4, 0.5, 0], size: [1.2, 0.42, 0.2] },
+      { id: "search", label: "Search Index", pos: [0.9, -0.05, -0.1], size: [1.1, 0.45, 0.2] },
+      { id: "db", label: "Prisma + DB", pos: [-0.6, -0.35, 0], size: [1.0, 0.4, 0.2] },
+    ],
+    flows: [
+      { from: "ui", to: "auth" },
+      { from: "auth", to: "providers" },
+      { from: "providers", to: "search" },
+      { from: "search", to: "db" },
+      { from: "ui", to: "db" },
+    ],
+  },
+
+  pulseforge: {
+    nodes: [
+      { id: "ingest", label: "Ingestion", pos: [-1.6, 0.35, 0], size: [1.0, 0.38, 0.2] },
+      { id: "queue", label: "Event Bus", pos: [-0.1, 0.8, 0.1], size: [1.0, 0.4, 0.2] },
+      { id: "workers", label: "Async Workers", pos: [1.35, 0.45, 0], size: [1.2, 0.45, 0.2] },
+      { id: "retry", label: "Retry/Idempotency", pos: [0.9, -0.05, -0.1], size: [1.25, 0.45, 0.2] },
+      { id: "db", label: "PostgreSQL", pos: [-0.6, -0.35, 0], size: [1.0, 0.4, 0.2] },
+      { id: "auth", label: "JWT/RBAC", pos: [-0.2, -0.05, 0.2], size: [0.9, 0.34, 0.2] },
+    ],
+    flows: [
+      { from: "ingest", to: "queue" },
+      { from: "queue", to: "workers" },
+      { from: "workers", to: "retry" },
+      { from: "retry", to: "db" },
+      { from: "auth", to: "ingest" },
+    ],
   },
 };
 
