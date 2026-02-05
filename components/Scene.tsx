@@ -10,6 +10,19 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const MATERIAL_MOODS: Record<
+  string,
+  { roughness: number; clearcoatRoughness: number; deform: number }
+> = {
+  home: { roughness: 0.14, clearcoatRoughness: 0.06, deform: 0.035 },
+  themes: { roughness: 0.18, clearcoatRoughness: 0.08, deform: 0.04 },
+  projects: { roughness: 0.08, clearcoatRoughness: 0.03, deform: 0.02 },
+  experience: { roughness: 0.22, clearcoatRoughness: 0.1, deform: 0.03 },
+  skills: { roughness: 0.16, clearcoatRoughness: 0.07, deform: 0.035 },
+  contact: { roughness: 0.28, clearcoatRoughness: 0.12, deform: 0.025 },
+};
+
+
 function HeroObject() {
   const meshRef = useRef<THREE.Mesh | null>(null);
 
