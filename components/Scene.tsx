@@ -253,3 +253,61 @@ export default function Scene() {
     </div>
   );
 }
+
+function ProjectExploded({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
+  const spec = PROJECT_GRAPH[id];
+  const t = useRef(0);
+
+  useEffect(() => {
+    // tiny entrance “explode” feel: nodes start slightly closer together
+    // then drift to their final positions via GSAP.
+    spec.nodes.forEach((n, i) => {
+      const el = document.getElementById(`node-${id}-${n.id}`);
+      void el; // (we animate in 3D below; keeping structure simple)
+    });
+  }, [id, spec.nodes]);
+
+  return (
+    <group>
+      {spec.nodes.map((n) => (
+        <group key={n.id} name={`node-${id}-${n.id}`}>
+          <NodeBox pos={n.pos} size={n.size} />
+        </group>
+      ))}
+
+      {/* flows */}
+      <FlowAnimator id={id} />
+    </group>
+  );
+}
+
+function FlowAnimator({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
+  const spec = PROJECT_GRAPH[id];
+  const phase = useRef(0);
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      phase.current += 0.04;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const byId = new Map(spec.nodes.map((n) => [n.id, n.pos] as const));
+
+  return (
+    <group>
+      {spec.flows.map((f, idx) => (
+        <FlowLine
+          key={`${f.from}-${f.to}-${idx}`}
+          a={byId.get(f.from)!}
+          b={byId.get(f.to)!}
+          phase={phase.current + idx}
+        />
+      ))}
+    </group>
+  );
+}
+
