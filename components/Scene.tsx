@@ -236,6 +236,7 @@ useEffect(() => {
 }
 
 export default function Scene() {
+  const { activeProject } = useSceneState();
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
       <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
@@ -245,7 +246,13 @@ export default function Scene() {
         <Suspense fallback={null}>
           <Environment preset="city" />
         </Suspense>
-        <HeroObject />
+        <group>
+        {!activeProject && <HeroObject />}
+        {activeProject && (
+    <ProjectExploded id={activeProject} />
+  )}
+</group>
+
       </Canvas>
 
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/70 to-black" />
