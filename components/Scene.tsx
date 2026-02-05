@@ -22,21 +22,18 @@ const MATERIAL_MOODS: Record<
   contact: { roughness: 0.28, clearcoatRoughness: 0.12, deform: 0.025 },
 };
 
-
-function HeroObject() {
+function HeroObject({ section }: { section: string }) {
   const meshRef = useRef<THREE.Mesh | null>(null);
 
-  // High-poly sphere for smooth deformation
   const geom = useMemo(() => {
-    const g = new THREE.IcosahedronGeometry(1.15, 32); 
+    const g = new THREE.IcosahedronGeometry(1.15, 32);
     g.computeVertexNormals();
     return g;
   }, []);
 
-  // Cache original positions so deformation is stable
   const base = useMemo(() => {
     const pos = geom.attributes.position.array as Float32Array;
-    return new Float32Array(pos); // copy
+    return new Float32Array(pos);
   }, [geom]);
 
   const mat = useMemo(
@@ -44,13 +41,19 @@ function HeroObject() {
       new THREE.MeshPhysicalMaterial({
         color: new THREE.Color("#f5f5f5"),
         metalness: 1,
-        roughness: 0.14,
+        roughness: MATERIAL_MOODS.home.roughness,
         clearcoat: 1,
-        clearcoatRoughness: 0.06,
+        clearcoatRoughness: MATERIAL_MOODS.home.clearcoatRoughness,
         reflectivity: 1,
       }),
     []
   );
+
+  const mood = useRef(MATERIAL_MOODS.home);
+
+  useEffect(() => {
+    mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
+  }, [section]);
 
   useFrame((state) => {
     const m = meshRef.current;
@@ -58,13 +61,15 @@ function HeroObject() {
 
     const t = state.clock.getElapsedTime();
 
-    // gentle rotation
     m.rotation.y = t * 0.18;
     m.rotation.x = 0.25 + Math.sin(t * 0.35) * 0.03;
 
-    // vertex displacement 
-    const g = geom;
-    const posAttr = g.attributes.position as THREE.BufferAttribute;
+    const material = m.material as THREE.MeshPhysicalMaterial;
+    material.roughness += (mood.current.roughness - material.roughness) * 0.04;
+    material.clearcoatRoughness +=
+      (mood.current.clearcoatRoughness - material.clearcoatRoughness) * 0.04;
+
+    const posAttr = geom.attributes.position as THREE.BufferAttribute;
     const pos = posAttr.array as Float32Array;
 
     for (let i = 0; i < pos.length; i += 3) {
@@ -72,12 +77,11 @@ function HeroObject() {
       const oy = base[i + 1];
       const oz = base[i + 2];
 
-      // smooth, blob-like displacement field
       const w1 = Math.sin(ox * 2.2 + t * 1.2);
       const w2 = Math.sin(oy * 2.0 - t * 1.0);
       const w3 = Math.sin(oz * 2.4 + t * 0.9);
 
-      const push = (w1 + w2 + w3) * 0.035; // amplitude
+      const push = (w1 + w2 + w3) * mood.current.deform;
       const scale = 1 + push;
 
       pos[i] = ox * scale;
@@ -86,7 +90,7 @@ function HeroObject() {
     }
 
     posAttr.needsUpdate = true;
-    g.computeVertexNormals();
+    geom.computeVertexNormals();
   });
 
   return (
@@ -253,7 +257,6 @@ function ProjectExploded({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
           <NodeBox pos={n.pos} size={n.size} />
         </group>
       ))}
-
       <FlowAnimator id={id} />
     </group>
   );
@@ -264,7 +267,6 @@ function CameraRig() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const target = useRef({ x: 0, y: 0 });
 
-  // Pointer tracking
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -277,7 +279,6 @@ function CameraRig() {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
-  // Section-based camera poses (ONE hook, no hooks in map)
   useEffect(() => {
     const cam = cameraRef.current;
     if (!cam) return;
@@ -322,7 +323,6 @@ function CameraRig() {
     return () => triggers.forEach((t) => t.kill());
   }, [activeProject]);
 
-  // Project zoom (separate hook)
   useEffect(() => {
     const cam = cameraRef.current;
     if (!cam) return;
@@ -338,7 +338,6 @@ function CameraRig() {
     }
   }, [activeProject]);
 
-  // Smooth look + small parallax without fighting GSAP
   useEffect(() => {
     const cam = cameraRef.current;
     if (!cam) return;
@@ -372,25 +371,25 @@ export default function Scene() {
   const [activeSection, setActiveSection] = useState("home");
 
   useEffect(() => {
-  const ids = Object.keys(MATERIAL_MOODS);
+    const ids = Object.keys(MATERIAL_MOODS);
 
-  const triggers = ids.map((id) => {
-    const el = document.getElementById(id);
-    if (!el) return null;
+    const triggers = ids
+      .map((id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
 
-    return ScrollTrigger.create({
-      trigger: el,
-      start: "top center",
-      end: "bottom center",
-      onEnter: () => setActiveSection(id),
-      onEnterBack: () => setActiveSection(id),
-    });
-  });
+        return ScrollTrigger.create({
+          trigger: el,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () => setActiveSection(id),
+          onEnterBack: () => setActiveSection(id),
+        });
+      })
+      .filter(Boolean) as ScrollTrigger[];
 
-  return () => triggers.forEach((t) => t?.kill());
-}, []);
-
-
+    return () => triggers.forEach((t) => t.kill());
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
@@ -406,7 +405,7 @@ export default function Scene() {
         </Suspense>
 
         <group>
-          {!activeProject && <HeroObject />}
+          {!activeProject && <HeroObject section={activeSection} />}
           {activeProject && <ProjectExploded id={activeProject} />}
         </group>
       </Canvas>
