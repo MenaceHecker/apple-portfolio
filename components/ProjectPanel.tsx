@@ -1,6 +1,7 @@
 "use client";
 
 import { useSceneState } from "@/components/SceneState";
+import { useEffect, useRef } from "react";
 
 const PROJECTS = {
   nexus: {
@@ -41,6 +42,22 @@ export default function ProjectPanel() {
   if (!activeProject) return null;
 
   const p = PROJECTS[activeProject];
+
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+useEffect(() => {
+  if (!activeProject) return;
+
+  closeBtnRef.current?.focus();
+
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") setActiveProject(null);
+  };
+
+  window.addEventListener("keydown", onKey);
+  return () => window.removeEventListener("keydown", onKey);
+}, [activeProject, setActiveProject]);
+
 
   return (
     <div className="fixed inset-0 z-30">
