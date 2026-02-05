@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import Scene from "@/components/Scene";
 import Section from "@/components/Section";
@@ -10,8 +10,8 @@ import Projects from "@/components/sections/Projects";
 import Experience from "@/components/sections/Experience";
 import Skills from "@/components/sections/Skills";
 import Contact from "@/components/sections/Contact";
-import type { ProjectId } from "@/lib/projects";
-
+import ProjectPanel from "@/components/ProjectPanel";
+import { SceneStateProvider } from "@/components/SceneState";
 
 export default function Page() {
   const sections = useMemo(
@@ -27,40 +27,38 @@ export default function Page() {
   );
 
   return (
-    <main className="relative min-h-screen bg-black text-white">
-      <Scene />
+    <SceneStateProvider>
+      <main className="relative min-h-screen bg-black text-white">
+        <Scene />
+        <Navbar sections={sections} />
+        <ProjectPanel />
 
-      <Navbar sections={sections} />
+        <div className="relative z-10">
+          <Section id="home">
+            <Hero />
+          </Section>
 
-      <div className="relative z-10">
-        <Section id="home">
-          <Hero />
-        </Section>
+          <Section id="themes">
+            <Themes />
+          </Section>
 
-        <Section id="themes">
-          <Themes />
-        </Section>
+          <Section id="projects">
+            <Projects />
+          </Section>
 
-        <Section id="projects">
-          <Projects />
-        </Section>
+          <Section id="experience">
+            <Experience />
+          </Section>
 
-        <Section id="experience">
-          <Experience />
-        </Section>
+          <Section id="skills">
+            <Skills />
+          </Section>
 
-        <Section id="skills">
-          <Skills />
-        </Section>
-
-        <Section id="contact">
-          <Contact />
-        </Section>
-
-        <footer className="px-6 pb-10 pt-2 text-center text-xs text-white/40">
-          © {new Date().getFullYear()} Tushar Mishra
-        </footer>
-      </div>
-    </main>
+          <Section id="contact">
+            <Contact />
+          </Section>
+        </div>
+      </main>
+    </SceneStateProvider>
   );
 }
