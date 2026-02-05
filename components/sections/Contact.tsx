@@ -19,7 +19,7 @@ export default function Contact() {
       </div>
 
       <div className="mt-8 text-xs text-white/40">
-        Based in the US • Open to full-time roles • Let’s build something great.
+        Based in Atlanta • Open to full-time roles • Let’s build something great.
       </div>
     </div>
   );
