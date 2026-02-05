@@ -24,6 +24,6 @@ export const PROJECTS: Project[] = [
     id: "pulseforge",
     name: "PulseForge",
     oneLiner: "Event-driven backend platform built with Spring Boot.",
-    tags: ["Java", "Spring Boot", "AWS"],
+    tags: ["Java", "Spring Boot", "PostgreSQL", "JWT", "Async"],
   },
 ];
