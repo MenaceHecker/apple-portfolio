@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-// import Navbar from "@/components/Navbar";
-// import Scene from "@/components/Scene";
-// import Section from "@/components/Section";
-// import Hero from "@/components/sections/Hero";
-// import Themes from "@/components/sections/Themes";
-// import Projects from "@/components/sections/Projects";
-// import Experience from "@/components/sections/Experience";
-// import Skills from "@/components/sections/Skills";
-// import Contact from "@/components/sections/Contact";
+import Navbar from "@/components/Navbar";
+import Scene from "@/components/Scene";
+import Section from "@/components/Section";
+import Hero from "@/components/sections/Hero";
+import Themes from "@/components/sections/Themes";
+import Projects from "@/components/sections/Projects";
+import Experience from "@/components/sections/Experience";
+import Skills from "@/components/sections/Skills";
+import Contact from "@/components/sections/Contact";
 
 export default function Page() {
   const sections = useMemo(
