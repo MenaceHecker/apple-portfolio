@@ -1,9 +1,9 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Environment, PerspectiveCamera, Line } from "@react-three/drei";
 import { useSceneState } from "@/components/SceneState";
-import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
@@ -11,11 +11,73 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 function HeroObject() {
+  const meshRef = useRef<THREE.Mesh | null>(null);
+
+  // High-poly sphere for smooth deformation
+  const geom = useMemo(() => {
+    const g = new THREE.IcosahedronGeometry(1.15, 32); 
+    g.computeVertexNormals();
+    return g;
+  }, []);
+
+  // Cache original positions so deformation is stable
+  const base = useMemo(() => {
+    const pos = geom.attributes.position.array as Float32Array;
+    return new Float32Array(pos); // copy
+  }, [geom]);
+
+  const mat = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#f5f5f5"),
+        metalness: 1,
+        roughness: 0.14,
+        clearcoat: 1,
+        clearcoatRoughness: 0.06,
+        reflectivity: 1,
+      }),
+    []
+  );
+
+  useFrame((state) => {
+    const m = meshRef.current;
+    if (!m) return;
+
+    const t = state.clock.getElapsedTime();
+
+    // gentle rotation
+    m.rotation.y = t * 0.18;
+    m.rotation.x = 0.25 + Math.sin(t * 0.35) * 0.03;
+
+    // vertex displacement 
+    const g = geom;
+    const posAttr = g.attributes.position as THREE.BufferAttribute;
+    const pos = posAttr.array as Float32Array;
+
+    for (let i = 0; i < pos.length; i += 3) {
+      const ox = base[i];
+      const oy = base[i + 1];
+      const oz = base[i + 2];
+
+      // smooth, blob-like displacement field
+      const w1 = Math.sin(ox * 2.2 + t * 1.2);
+      const w2 = Math.sin(oy * 2.0 - t * 1.0);
+      const w3 = Math.sin(oz * 2.4 + t * 0.9);
+
+      const push = (w1 + w2 + w3) * 0.035; // amplitude
+      const scale = 1 + push;
+
+      pos[i] = ox * scale;
+      pos[i + 1] = oy * scale;
+      pos[i + 2] = oz * scale;
+    }
+
+    posAttr.needsUpdate = true;
+    g.computeVertexNormals();
+  });
+
   return (
-    <mesh position={[0, 0, 0]} rotation={[0.3, 0.4, 0]}>
-      <torusKnotGeometry args={[0.7, 0.22, 220, 24]} />
-      <meshStandardMaterial metalness={0.9} roughness={0.15} color="#ffffff" />
-    </mesh>
+    <mesh ref={meshRef} geometry={geom} material={mat} position={[0, 0, 0]} />
   );
 }
 
@@ -300,8 +362,9 @@ export default function Scene() {
       <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
         <CameraRig />
 
-        <ambientLight intensity={0.35} />
-        <directionalLight position={[3, 4, 2]} intensity={1.1} />
+        <ambientLight intensity={0.25} />
+        <directionalLight position={[3, 4, 2]} intensity={1.25} />
+        <directionalLight position={[-4, -2, 3]} intensity={0.55} />
 
         <Suspense fallback={null}>
           <Environment preset="city" />
