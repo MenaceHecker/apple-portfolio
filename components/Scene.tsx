@@ -153,6 +153,7 @@ function FlowLine({
 
 
 function CameraRig() {
+  const { activeProject } = useSceneState();
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const target = useRef({ x: 0, y: 0 });
 
@@ -178,6 +179,21 @@ useEffect(() => {
     if (!el) return null;
 
     const pose = CAMERA_POSES[id];
+
+    useEffect(() => {
+  const cam = cameraRef.current;
+  if (!cam) return;
+
+  if (activeProject) {
+    gsap.to(cam.position, {
+      x: 1.05,
+      y: -0.15,
+      z: 4.35,
+      duration: 0.9,
+      ease: "power3.out",
+    });
+  }
+}, [activeProject]);
 
     return ScrollTrigger.create({
       trigger: el,
