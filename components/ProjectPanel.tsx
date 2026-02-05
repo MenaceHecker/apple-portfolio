@@ -76,11 +76,13 @@ useEffect(() => {
           </div>
 
           <button
+            ref={closeBtnRef}
             onClick={() => setActiveProject(null)}
             className="rounded-full border border-white/10 px-3 py-1 text-xs hover:bg-white/10"
-          >
+            >
             Close
-          </button>
+        </button>
+
         </div>
 
         <ul className="mt-6 space-y-2 text-sm text-white/70">
