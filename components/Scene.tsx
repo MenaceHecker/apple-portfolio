@@ -22,6 +22,36 @@ function HeroObject() {
     </mesh>
   );
 }
+const CAMERA_POSES: Record<
+  string,
+  { position: [number, number, number]; lookAt?: [number, number, number] }
+> = {
+  home: {
+    position: [0.2, 0.1, 6.2],
+    lookAt: [0, 0, 0],
+  },
+  themes: {
+    position: [-0.4, 0.3, 5.6],
+    lookAt: [0, 0, 0],
+  },
+  projects: {
+    position: [0.8, -0.2, 4.6],
+    lookAt: [0, 0, 0],
+  },
+  experience: {
+    position: [-0.6, 0.15, 5.8],
+    lookAt: [0, 0, 0],
+  },
+  skills: {
+    position: [0.4, 0.4, 5.2],
+    lookAt: [0, 0, 0],
+  },
+  contact: {
+    position: [0, 0.2, 6.6],
+    lookAt: [0, 0, 0],
+  },
+};
+
 
 function CameraRig() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
