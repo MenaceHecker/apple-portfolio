@@ -392,7 +392,11 @@ export default function Scene() {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0">
+    <div
+  className={`pointer-events-none fixed inset-0 z-0 transition duration-500 ${
+    activeProject ? "blur-[4px] brightness-75 saturate-90" : "blur-0 brightness-100 saturate-100"
+  }`}>
+
       <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
         <CameraRig />
 
@@ -412,6 +416,9 @@ export default function Scene() {
 
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/70 to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,255,255,0.10),transparent_55%)]" />
+          <div className={`absolute inset-0 transition duration-500 ${
+        activeProject ? "opacity-100" : "opacity-0"   }
+        bg-[radial-gradient(circle_at_50%_40%,transparent_0%,rgba(0,0,0,0.55)_55%,rgba(0,0,0,0.85)_80%)]`}/>
     </div>
   );
 }
