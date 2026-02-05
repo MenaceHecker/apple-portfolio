@@ -1,11 +1,12 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
+import { Environment, PerspectiveCamera } from "@react-three/drei";
 import { Suspense, useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
+
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -74,9 +75,9 @@ function CameraRig() {
     };
   }, []);
 
-  return (
-    <perspectiveCamera
-      ref={(c) => (cameraRef.current = c)}
+    return (
+    <PerspectiveCamera
+      ref={cameraRef}
       makeDefault
       fov={45}
       position={[0.2, 0.1, 6.2]}
