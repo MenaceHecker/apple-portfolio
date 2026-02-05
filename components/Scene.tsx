@@ -123,6 +123,34 @@ const PROJECT_GRAPH: Record<
   },
 };
 
+function NodeBox({ pos, size }: { pos: [number, number, number]; size: [number, number, number] }) {
+  return (
+    <mesh position={pos}>
+      <boxGeometry args={size} />
+      <meshStandardMaterial metalness={0.65} roughness={0.22} color="#ffffff" />
+    </mesh>
+  );
+}
+
+function FlowLine({
+  a,
+  b,
+  phase,
+}: {
+  a: [number, number, number];
+  b: [number, number, number];
+  phase: number;
+}) {
+  const mid: [number, number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + 0.25, (a[2] + b[2]) / 2];
+  const points = [a, mid, b];
+
+  // subtle “pulse”: so it would fake motion by oscillating opacity-like effect using lineWidth not reliable,
+  // so we gently shift the mid height by phase and rely on lighting + compositing.
+  points[1] = [mid[0], mid[1] + Math.sin(phase) * 0.05, mid[2]];
+
+  return <Line points={points} lineWidth={1} color="white" transparent opacity={0.35} />;
+}
+
 
 function CameraRig() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
