@@ -70,7 +70,7 @@ export default function ProjectPanel() {
       />
 
       {/* Panel */}
-      <aside className="absolute right-0 top-0 h-full w-full max-w-md border-l border-white/10 bg-black/80 p-6 backdrop-blur-xl">
+      <aside className="absolute right-0 top-0 h-full w-full max-w-md border-l border-white/10 bg-black/80 p-6 backdrop-blur-xl animate-[panelIn_500ms_ease-out]">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold">{p.title}</h3>
