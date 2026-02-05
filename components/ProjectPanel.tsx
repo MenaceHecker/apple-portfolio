@@ -1,7 +1,7 @@
 "use client";
 
-import { useSceneState } from "@/components/SceneState";
 import { useEffect, useRef } from "react";
+import { useSceneState } from "@/components/SceneState";
 
 const PROJECTS = {
   nexus: {
@@ -14,6 +14,7 @@ const PROJECTS = {
     ],
     stack: ["Python", "Prometheus", "Grafana", "ELK", "Postgres"],
   },
+
   inboxiq: {
     title: "InboxIQ",
     summary: "Email organizer with Gmail/Outlook integrations.",
@@ -24,6 +25,7 @@ const PROJECTS = {
     ],
     stack: ["Next.js", "TypeScript", "Prisma", "AWS"],
   },
+
   pulseforge: {
     title: "PulseForge",
     summary: "Event-driven backend platform for reliable async processing.",
@@ -39,30 +41,30 @@ const PROJECTS = {
 export default function ProjectPanel() {
   const { activeProject, setActiveProject } = useSceneState();
 
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!activeProject) return;
+
+    closeBtnRef.current?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveProject(null);
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeProject, setActiveProject]);
+
   if (!activeProject) return null;
 
   const p = PROJECTS[activeProject];
-
-  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-
-useEffect(() => {
-  if (!activeProject) return;
-
-  closeBtnRef.current?.focus();
-
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") setActiveProject(null);
-  };
-
-  window.addEventListener("keydown", onKey);
-  return () => window.removeEventListener("keydown", onKey);
-}, [activeProject, setActiveProject]);
-
 
   return (
     <div className="fixed inset-0 z-30">
       {/* Backdrop */}
       <button
+        aria-label="Close panel"
         onClick={() => setActiveProject(null)}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
@@ -79,10 +81,9 @@ useEffect(() => {
             ref={closeBtnRef}
             onClick={() => setActiveProject(null)}
             className="rounded-full border border-white/10 px-3 py-1 text-xs hover:bg-white/10"
-            >
+          >
             Close
-        </button>
-
+          </button>
         </div>
 
         <ul className="mt-6 space-y-2 text-sm text-white/70">
