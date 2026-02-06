@@ -267,6 +267,9 @@ function CameraRig() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const target = useRef({ x: 0, y: 0 });
 
+  const fovRef = useRef(45);
+  const fovTweenRef = useRef<gsap.core.Tween | null>(null);
+
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -327,15 +330,31 @@ function CameraRig() {
     const cam = cameraRef.current;
     if (!cam) return;
 
-    if (activeProject) {
-      gsap.to(cam.position, {
-        x: 1.05,
-        y: -0.15,
-        z: 4.35,
-        duration: 0.9,
-        ease: "power3.out",
-      });
-    }
+    gsap.to(cam.position, {
+      x: activeProject ? 1.05 : CAMERA_POSES.home.position[0],
+      y: activeProject ? -0.15 : CAMERA_POSES.home.position[1],
+      z: activeProject ? 4.35 : CAMERA_POSES.home.position[2],
+      duration: 0.9,
+      ease: "power3.out",
+    });
+
+    fovTweenRef.current?.kill();
+    fovTweenRef.current = gsap.to(fovRef, {
+      current: activeProject ? 40 : 45,
+      duration: 0.9,
+      ease: "power3.out",
+      onUpdate: () => {
+        const c = cameraRef.current;
+        if (!c) return;
+        c.fov = fovRef.current;
+        c.updateProjectionMatrix();
+      },
+    });
+
+    return () => {
+      fovTweenRef.current?.kill();
+      fovTweenRef.current = null;
+    };
   }, [activeProject]);
 
   useEffect(() => {
@@ -393,10 +412,12 @@ export default function Scene() {
 
   return (
     <div
-  className={`pointer-events-none fixed inset-0 z-0 transition duration-500 ${
-    activeProject ? "blur-[4px] brightness-75 saturate-90" : "blur-0 brightness-100 saturate-100"
-  }`}>
-
+      className={`pointer-events-none fixed inset-0 z-0 transition duration-500 ${
+        activeProject
+          ? "blur-[4px] brightness-75 saturate-90"
+          : "blur-0 brightness-100 saturate-100"
+      }`}
+    >
       <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
         <CameraRig />
 
@@ -416,9 +437,11 @@ export default function Scene() {
 
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/70 to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,255,255,0.10),transparent_55%)]" />
-          <div className={`absolute inset-0 transition duration-500 ${
-        activeProject ? "opacity-100" : "opacity-0"   }
-        bg-[radial-gradient(circle_at_50%_40%,transparent_0%,rgba(0,0,0,0.55)_55%,rgba(0,0,0,0.85)_80%)]`}/>
+      <div
+        className={`absolute inset-0 transition duration-500 ${
+          activeProject ? "opacity-100" : "opacity-0"
+        } bg-[radial-gradient(circle_at_50%_40%,transparent_0%,rgba(0,0,0,0.55)_55%,rgba(0,0,0,0.85)_80%)]`}
+      />
     </div>
   );
 }
