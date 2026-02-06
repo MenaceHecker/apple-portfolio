@@ -2,7 +2,7 @@
 
 const EXPERIENCE = [
   {
-    role: "Software Engineer — Platform Automation",
+    role: "IT Engineer",
     org: "Georgia Institute of Technology",
     time: "Aug 2025 — Present",
     tags: [
