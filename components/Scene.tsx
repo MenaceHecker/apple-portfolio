@@ -469,25 +469,22 @@ function CameraRig() {
 function HoverLabel({ enabled }: { enabled: boolean }) {
   const { hoverProject, activeProject } = useSceneState();
 
-  const base = useMemo(() => {
-    if (!hoverProject) return null;
-
-    if (hoverProject === "nexus") {
-      return { title: "Nexus", sub: "Observability • SLOs • Grafana", x: 18, y: 28 };
-    }
-    if (hoverProject === "inboxiq") {
-      return { title: "InboxIQ", sub: "Email OS • Search-first UX", x: 50, y: 24 };
-    }
-    return { title: "PulseForge", sub: "Event-driven • Retries • Idempotency", x: 82, y: 28 };
-  }, [hoverProject]);
-
-  const show = enabled && !activeProject && !!base;
-
   const ref = useRef<HTMLDivElement | null>(null);
+
   const cursor = useRef({ x: 50, y: 35 });
+  const base = useRef({ x: 50, y: 30 });
   const pos = useRef({ x: 50, y: 30 });
 
-  // Read spotlight cursor vars 
+  const show = enabled && !activeProject && !!hoverProject;
+
+  const text = useMemo(() => {
+    if (!hoverProject) return null;
+    if (hoverProject === "nexus") return { title: "Nexus", sub: "Observability • SLOs • Grafana" };
+    if (hoverProject === "inboxiq") return { title: "InboxIQ", sub: "Email OS • Search-first UX" };
+    return { title: "PulseForge", sub: "Event-driven • Retries • Idempotency" };
+  }, [hoverProject]);
+
+  // Reading the spotlight vars for cursor position
   useEffect(() => {
     let raf = 0;
 
@@ -511,26 +508,57 @@ function HoverLabel({ enabled }: { enabled: boolean }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Magnet motion toward cursor
+  // Snapping the base position to the hovered card center (viewport %)
+  useEffect(() => {
+    if (!show || !hoverProject) return;
+
+    const readCard = () => {
+      const btn = document.querySelector(
+        `[data-project="${hoverProject}"]`
+      ) as HTMLElement | null;
+
+      if (!btn) return;
+
+      const r = btn.getBoundingClientRect();
+      const cx = ((r.left + r.right) / 2 / window.innerWidth) * 100;
+      const cy = ((r.top + r.bottom) / 2 / window.innerHeight) * 100;
+
+      // placing the label slightly above the card
+      base.current.x = cx;
+      base.current.y = cy - 10;
+    };
+
+    readCard();
+
+    window.addEventListener("resize", readCard, { passive: true });
+    window.addEventListener("scroll", readCard, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", readCard);
+      window.removeEventListener("scroll", readCard);
+    };
+  }, [show, hoverProject]);
+
+  // Animate to base drift toward cursor
   useEffect(() => {
     let raf = 0;
 
     const tick = () => {
       const node = ref.current;
-      if (!node || !base || !show) {
+
+      if (!node || !show || !text) {
         raf = requestAnimationFrame(tick);
         return;
       }
 
-      // clamp drift so it never goes crazy
-      const driftX = Math.max(-6, Math.min(6, (cursor.current.x - base.x) * 0.18));
-      const driftY = Math.max(-5, Math.min(5, (cursor.current.y - base.y) * 0.14));
+      const dx = Math.max(-5, Math.min(5, (cursor.current.x - base.current.x) * 0.16));
+      const dy = Math.max(-4, Math.min(4, (cursor.current.y - base.current.y) * 0.12));
 
-      const tx = base.x + driftX;
-      const ty = base.y + driftY;
+      const tx = base.current.x + dx;
+      const ty = base.current.y + dy;
 
-      pos.current.x += (tx - pos.current.x) * 0.12;
-      pos.current.y += (ty - pos.current.y) * 0.12;
+      pos.current.x += (tx - pos.current.x) * 0.14;
+      pos.current.y += (ty - pos.current.y) * 0.14;
 
       node.style.left = `${pos.current.x}%`;
       node.style.top = `${pos.current.y}%`;
@@ -540,34 +568,32 @@ function HoverLabel({ enabled }: { enabled: boolean }) {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [base, show]);
+  }, [show, text]);
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 transition duration-300 ${
+      className={`pointer-events-none absolute inset-0 transition duration-200 ${
         show ? "opacity-100" : "opacity-0"
       }`}
     >
       <div
         ref={ref}
-        className={`absolute -translate-x-1/2 -translate-y-1/2 transition duration-300 ${
+        className={`absolute -translate-x-1/2 -translate-y-1/2 transition duration-200 ${
           show ? "translate-y-0" : "translate-y-1"
         }`}
-        style={{
-          left: `${base?.x ?? 50}%`,
-          top: `${base?.y ?? 30}%`,
-        }}
+        style={{ left: "50%", top: "30%" }}
       >
         <div className="rounded-2xl border border-white/14 bg-white/8 px-4 py-2 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
           <div className="text-sm font-medium tracking-tight text-white/90">
-            {base?.title}
+            {text?.title}
           </div>
-          <div className="mt-0.5 text-[11px] text-white/60">{base?.sub}</div>
+          <div className="mt-0.5 text-[11px] text-white/60">{text?.sub}</div>
         </div>
       </div>
     </div>
   );
 }
+
 
 
 export default function Scene() {
