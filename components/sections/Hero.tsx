@@ -39,7 +39,7 @@ export default function Hero() {
         </div>
 
         <div className="mt-10 flex flex-wrap gap-2 text-xs text-white/55">
-          <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1">F-1 OPT</span>
+          <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1">New-Grad</span>
           <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1">AWS • Cloud-native</span>
           <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1">Backend • Systems</span>
         </div>
