@@ -13,6 +13,7 @@ import Contact from "@/components/sections/Contact";
 import ProjectPanel from "@/components/ProjectPanel";
 import { SceneStateProvider } from "@/components/SceneState";
 
+
 export default function Page() {
   const sections = useMemo(
     () => [
