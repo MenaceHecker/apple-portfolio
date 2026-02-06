@@ -469,7 +469,7 @@ function CameraRig() {
 function HoverLabel({ enabled }: { enabled: boolean }) {
   const { hoverProject, activeProject } = useSceneState();
 
-  const label = useMemo(() => {
+  const base = useMemo(() => {
     if (!hoverProject) return null;
 
     if (hoverProject === "nexus") {
@@ -481,7 +481,66 @@ function HoverLabel({ enabled }: { enabled: boolean }) {
     return { title: "PulseForge", sub: "Event-driven • Retries • Idempotency", x: 82, y: 28 };
   }, [hoverProject]);
 
-  const show = enabled && !activeProject && !!label;
+  const show = enabled && !activeProject && !!base;
+
+  const ref = useRef<HTMLDivElement | null>(null);
+  const cursor = useRef({ x: 50, y: 35 });
+  const pos = useRef({ x: 50, y: 30 });
+
+  // Read spotlight cursor vars 
+  useEffect(() => {
+    let raf = 0;
+
+    const tick = () => {
+      const el = document.getElementById("cursor-spotlight");
+      if (el) {
+        const sx = getComputedStyle(el).getPropertyValue("--sx").trim();
+        const sy = getComputedStyle(el).getPropertyValue("--sy").trim();
+
+        const cx = Number.parseFloat(sx.replace("%", "")) || 50;
+        const cy = Number.parseFloat(sy.replace("%", "")) || 35;
+
+        cursor.current.x = cx;
+        cursor.current.y = cy;
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Magnet motion toward cursor
+  useEffect(() => {
+    let raf = 0;
+
+    const tick = () => {
+      const node = ref.current;
+      if (!node || !base || !show) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      // clamp drift so it never goes crazy
+      const driftX = Math.max(-6, Math.min(6, (cursor.current.x - base.x) * 0.18));
+      const driftY = Math.max(-5, Math.min(5, (cursor.current.y - base.y) * 0.14));
+
+      const tx = base.x + driftX;
+      const ty = base.y + driftY;
+
+      pos.current.x += (tx - pos.current.x) * 0.09;
+      pos.current.y += (ty - pos.current.y) * 0.09;
+
+      node.style.left = `${pos.current.x}%`;
+      node.style.top = `${pos.current.y}%`;
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [base, show]);
 
   return (
     <div
@@ -490,26 +549,26 @@ function HoverLabel({ enabled }: { enabled: boolean }) {
       }`}
     >
       <div
+        ref={ref}
         className={`absolute -translate-x-1/2 -translate-y-1/2 transition duration-300 ${
           show ? "translate-y-0" : "translate-y-1"
         }`}
         style={{
-          left: `${label?.x ?? 50}%`,
-          top: `${label?.y ?? 30}%`,
+          left: `${base?.x ?? 50}%`,
+          top: `${base?.y ?? 30}%`,
         }}
       >
         <div className="rounded-2xl border border-white/14 bg-white/8 px-4 py-2 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
           <div className="text-sm font-medium tracking-tight text-white/90">
-            {label?.title}
+            {base?.title}
           </div>
-          <div className="mt-0.5 text-[11px] text-white/60">
-            {label?.sub}
-          </div>
+          <div className="mt-0.5 text-[11px] text-white/60">{base?.sub}</div>
         </div>
       </div>
     </div>
   );
 }
+
 
 export default function Scene() {
   const { activeProject } = useSceneState();
