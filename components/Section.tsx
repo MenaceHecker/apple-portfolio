@@ -1,23 +1,17 @@
-"use client";
-
 export default function Section({
   id,
   children,
-  tight = false,
 }: {
   id: string;
   children: React.ReactNode;
-  tight?: boolean;
 }) {
   return (
     <section
       id={id}
-      className={`
-        relative
-        ${tight ? "py-16 md:py-20" : "py-20 md:py-24"}
-      `}
+      className="relative px-6 py-20 sm:py-28 md:py-32"
+      style={{ scrollMarginTop: 96 }}
     >
-      {children}
+      <div className="mx-auto w-full max-w-6xl">{children}</div>
     </section>
   );
 }
