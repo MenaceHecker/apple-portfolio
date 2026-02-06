@@ -465,6 +465,51 @@ function CameraRig() {
   );
 }
 
+function HoverLabel({ enabled }: { enabled: boolean }) {
+  const { hoverProject, activeProject } = useSceneState();
+
+  const label = useMemo(() => {
+    if (!hoverProject) return null;
+
+    if (hoverProject === "nexus") {
+      return { title: "Nexus", sub: "Observability • SLOs • Grafana", x: 18, y: 28 };
+    }
+    if (hoverProject === "inboxiq") {
+      return { title: "InboxIQ", sub: "Email OS • Search-first UX", x: 50, y: 24 };
+    }
+    return { title: "PulseForge", sub: "Event-driven • Retries • Idempotency", x: 82, y: 28 };
+  }, [hoverProject]);
+
+  const show = enabled && !activeProject && !!label;
+
+  return (
+    <div
+      className={`pointer-events-none absolute inset-0 transition duration-300 ${
+        show ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      <div
+        className={`absolute -translate-x-1/2 -translate-y-1/2 transition duration-300 ${
+          show ? "translate-y-0" : "translate-y-1"
+        }`}
+        style={{
+          left: `${label?.x ?? 50}%`,
+          top: `${label?.y ?? 30}%`,
+        }}
+      >
+        <div className="rounded-2xl border border-white/14 bg-white/8 px-4 py-2 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <div className="text-sm font-medium tracking-tight text-white/90">
+            {label?.title}
+          </div>
+          <div className="mt-0.5 text-[11px] text-white/60">
+            {label?.sub}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Scene() {
   const { activeProject } = useSceneState();
   const [activeSection, setActiveSection] = useState("home");

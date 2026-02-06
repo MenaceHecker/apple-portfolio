@@ -129,13 +129,13 @@ export default function ProjectPanel() {
                 View GitHub
               </button>
               <button className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white/80 hover:bg-white/12">
-                Read Case Study
+                View Live Demo
               </button>
             </div>
           </div>
         </div>
 
-        {/* tiny home indicator */}
+        {/* home indicator */}
         <div className="mx-auto mt-3 h-1.5 w-20 rounded-full bg-white/20" />
       </div>
     </div>
