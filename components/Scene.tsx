@@ -184,6 +184,10 @@ function HeroObject({ section }: { section: string }) {
 
   const mood = useRef(MATERIAL_MOODS.home);
 
+  const hoverTarget = useRef({ x: 0, y: 0 });
+  const hoverPull = useRef(0);
+
+
   useEffect(() => {
     mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
   }, [section]);
