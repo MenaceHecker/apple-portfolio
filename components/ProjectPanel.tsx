@@ -1,27 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSceneState, ProjectId } from "@/components/SceneState";
 
 const PROJECTS: Record<ProjectId, { title: string; subtitle: string; bullets: string[]; stack: string[] }> = {
   nexus: {
     title: "Nexus",
     subtitle: "Distributed observability stack",
-    bullets: [
-      "SLO-based monitoring with alerts and error budgets",
-      "Metrics + logs pipeline with dashboards and drill-downs",
-      "Failure simulation to validate resilience",
-    ],
-    stack: ["Python", "Flask", "Prometheus", "Grafana", "ELK", "PostgreSQL"],
+    bullets: ["SLO dashboards + error budgets", "Prometheus/Grafana pipeline", "Logs + root-cause workflows"],
+    stack: ["Python", "Prometheus", "Grafana", "ELK", "PostgreSQL"],
   },
   inboxiq: {
     title: "InboxIQ",
     subtitle: "Intelligent email organizer",
-    bullets: [
-      "Gmail/Outlook sync with smart categorization",
-      "Search + labeling workflows for high-volume inboxes",
-      "Auth-first architecture with clean UX flows",
-    ],
+    bullets: ["Unified inbox workflows", "Provider integrations", "Search-first UX"],
     stack: ["Next.js", "TypeScript", "Prisma", "Auth", "Search"],
   },
   pulseforge: {
@@ -37,32 +29,116 @@ const PROJECTS: Record<ProjectId, { title: string; subtitle: string; bullets: st
 };
 
 export default function ProjectPanel() {
-  const { activeProject, setActiveProject } = useSceneState();
+  const { activeProject, setActiveProject, panelFrom, setPanelFrom } = useSceneState();
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [animating, setAnimating] = useState(false);
 
   const isOpen = !!activeProject;
-  const p = activeProject ? PROJECTS[activeProject] : null;
+  const p = useMemo(() => (activeProject ? PROJECTS[activeProject] : null), [activeProject]);
+
+  const playOpen = async () => {
+    const el = panelRef.current;
+    if (!el || !panelFrom) return;
+
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+    const to = el.getBoundingClientRect();
+    const from = panelFrom;
+
+    const fromCx = from.left + from.width / 2;
+    const fromCy = from.top + from.height / 2;
+    const toCx = to.left + to.width / 2;
+    const toCy = to.top + to.height / 2;
+
+    const dx = fromCx - toCx;
+    const dy = fromCy - toCy;
+
+    const sx = from.width / to.width;
+    const sy = from.height / to.height;
+
+    el.style.transformOrigin = "center";
+    el.style.willChange = "transform, opacity, filter";
+    el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+    el.style.opacity = "0.95";
+    el.style.filter = "blur(0px)";
+
+    el.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.95 },
+        { transform: "translate(0px, 0px) scale(1, 1)", opacity: 1 },
+      ],
+      { duration: 520, easing: "cubic-bezier(0.16, 1, 0.3, 1)", fill: "forwards" }
+    );
+
+    // clearing the origin once opened so future resizes don’t use stale rect
+    setPanelFrom(null);
+  };
+
+  const playClose = async () => {
+    const el = panelRef.current;
+    if (!el || !activeProject) {
+      setActiveProject(null);
+      return;
+    }
+
+    // finding the card again by data-project so it closes back to the real place
+    const btn = document.querySelector(`[data-project="${activeProject}"]`) as HTMLElement | null;
+    if (!btn) {
+      setActiveProject(null);
+      return;
+    }
+
+    const from = btn.getBoundingClientRect();
+    const to = el.getBoundingClientRect();
+
+    const fromCx = from.left + from.width / 2;
+    const fromCy = from.top + from.height / 2;
+    const toCx = to.left + to.width / 2;
+    const toCy = to.top + to.height / 2;
+
+    const dx = fromCx - toCx;
+    const dy = fromCy - toCy;
+
+    const sx = from.width / to.width;
+    const sy = from.height / to.height;
+
+    setAnimating(true);
+
+    const anim = el.animate(
+      [
+        { transform: "translate(0px, 0px) scale(1, 1)", opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.0 },
+      ],
+      { duration: 420, easing: "cubic-bezier(0.2, 0.9, 0.2, 1)", fill: "forwards" }
+    );
+
+    await anim.finished.catch(() => {});
+    setAnimating(false);
+    setActiveProject(null);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // focus + esc close
     closeBtnRef.current?.focus();
 
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActiveProject(null);
-    };
-
-    // lock scroll
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") void playClose();
+    };
+
     window.addEventListener("keydown", onKey);
+    void playOpen();
+
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, setActiveProject]);
+
+  }, [isOpen]);
 
   return (
     <div
@@ -73,19 +149,16 @@ export default function ProjectPanel() {
     >
       {/* scrim */}
       <div
-        className={`absolute inset-0 transition duration-300 ${
-          isOpen ? "bg-black/45" : "bg-black/0"
-        }`}
-        onClick={() => setActiveProject(null)}
+        className={`absolute inset-0 transition duration-300 ${isOpen ? "bg-black/45" : "bg-black/0"}`}
+        onClick={() => void playClose()}
       />
 
-      {/* sheet */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 mx-auto max-w-3xl px-4 pb-6 transition duration-500 ${
-          isOpen ? "translate-y-0" : "translate-y-8"
-        }`}
-      >
-        <div className="rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
+      {/* sheet wrapper */}
+      <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-3xl px-4 pb-6">
+        <div
+          ref={panelRef}
+          className="rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-[0_30px_120px_rgba(0,0,0,0.55)]"
+        >
           <div className="flex items-start justify-between gap-4 px-6 pt-6">
             <div>
               <div className="text-xl font-semibold tracking-tight">{p?.title}</div>
@@ -94,8 +167,9 @@ export default function ProjectPanel() {
 
             <button
               ref={closeBtnRef}
-              onClick={() => setActiveProject(null)}
-              className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-sm text-white/80 hover:bg-white/12"
+              onClick={() => void playClose()}
+              disabled={animating}
+              className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-sm text-white/80 hover:bg-white/12 disabled:opacity-60"
             >
               Close
             </button>
@@ -115,27 +189,14 @@ export default function ProjectPanel() {
             <div className="mt-6 text-sm font-medium text-white/85">Stack</div>
             <div className="mt-3 flex flex-wrap gap-2">
               {p?.stack.map((s) => (
-                <span
-                  key={s}
-                  className="rounded-full border border-white/12 bg-white/6 px-3 py-1 text-xs text-white/75"
-                >
+                <span key={s} className="rounded-full border border-white/12 bg-white/6 px-3 py-1 text-xs text-white/75">
                   {s}
                 </span>
               ))}
             </div>
-
-            <div className="mt-6 flex gap-3">
-              <button className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:opacity-90">
-                View GitHub
-              </button>
-              <button className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white/80 hover:bg-white/12">
-                View Live Demo
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* home indicator */}
         <div className="mx-auto mt-3 h-1.5 w-20 rounded-full bg-white/20" />
       </div>
     </div>
