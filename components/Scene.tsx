@@ -564,6 +564,8 @@ export default function Scene() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,255,255,0.10),transparent_55%)]" />
 
       <CursorSpotlight enabled={!activeProject} />
+      <HoverLabel enabled={!activeProject} />
+
 
       <div
         className={`absolute inset-0 transition duration-500 ${
