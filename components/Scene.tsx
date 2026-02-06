@@ -142,6 +142,7 @@ function CursorSpotlight({ enabled }: { enabled: boolean }) {
 
   return (
     <div
+      id="cursor-spotlight"
       ref={ref}
       className={`pointer-events-none absolute inset-0 transition duration-500 ${
         enabled ? "opacity-100" : "opacity-0"
