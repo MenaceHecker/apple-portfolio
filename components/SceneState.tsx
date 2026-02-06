@@ -2,7 +2,14 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 
-export type ProjectId = "nexus" | "inboxiq" | "pulseforge";
+export type ProjectId =
+  | "nexus"
+  | "inboxiq"
+  | "pulseforge"
+  | "mini-ml-platform"
+  | "procuroid"
+  | "movieit"
+  | "crumb";
 
 type Rect = { left: number; top: number; width: number; height: number };
 
