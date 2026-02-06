@@ -7,6 +7,9 @@ export type ProjectId = "nexus" | "inboxiq" | "pulseforge";
 type SceneState = {
   activeProject: ProjectId | null;
   setActiveProject: (id: ProjectId | null) => void;
+
+  hoverProject: ProjectId | null;
+  setHoverProject: (id: ProjectId | null) => void;
 };
 
 const SceneContext = createContext<SceneState | null>(null);
@@ -17,10 +20,16 @@ export function SceneStateProvider({
   children: React.ReactNode;
 }) {
   const [activeProject, setActiveProject] = useState<ProjectId | null>(null);
+  const [hoverProject, setHoverProject] = useState<ProjectId | null>(null);
 
   const value = useMemo(
-    () => ({ activeProject, setActiveProject }),
-    [activeProject]
+    () => ({
+      activeProject,
+      setActiveProject,
+      hoverProject,
+      setHoverProject,
+    }),
+    [activeProject, hoverProject]
   );
 
   return (
