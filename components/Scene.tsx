@@ -192,6 +192,18 @@ function HeroObject({ section }: { section: string }) {
     mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
   }, [section]);
 
+  useEffect(() => {
+  if (!hoverProject) {
+    hoverTarget.current = { x: 0, y: 0 };
+    return;
+  }
+
+  if (hoverProject === "nexus") hoverTarget.current = { x: -0.7, y: 0.25 };
+  if (hoverProject === "inboxiq") hoverTarget.current = { x: 0.0, y: 0.35 };
+  if (hoverProject === "pulseforge") hoverTarget.current = { x: 0.7, y: 0.25 };
+}, [hoverProject]);
+
+
   useFrame((state) => {
     const m = meshRef.current;
     if (!m) return;
