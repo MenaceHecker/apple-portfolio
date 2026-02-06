@@ -178,6 +178,60 @@ const PROJECT_GRAPH: Record<
   },
 };
 
+function CursorSpotlight({ enabled }: { enabled: boolean }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const target = useRef({ x: 50, y: 35 });
+  const pos = useRef({ x: 50, y: 35 });
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const onMove = (e: PointerEvent) => {
+      target.current.x = (e.clientX / window.innerWidth) * 100;
+      target.current.y = (e.clientY / window.innerHeight) * 100;
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [enabled]);
+
+  useEffect(() => {
+    let raf = 0;
+
+    const tick = () => {
+      const el = ref.current;
+
+      // ease toward cursor
+      pos.current.x += (target.current.x - pos.current.x) * 0.08;
+      pos.current.y += (target.current.y - pos.current.y) * 0.08;
+
+      if (el) {
+        el.style.setProperty("--sx", `${pos.current.x}%`);
+        el.style.setProperty("--sy", `${pos.current.y}%`);
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`pointer-events-none absolute inset-0 transition duration-500 ${
+        enabled ? "opacity-100" : "opacity-0"
+      }`}
+      style={{
+        background:
+          "radial-gradient(650px circle at var(--sx, 50%) var(--sy, 35%), rgba(255,255,255,0.14), rgba(255,255,255,0.06) 35%, rgba(0,0,0,0) 70%)",
+      }}
+    />
+  );
+}
+
+
 function NodeBox({
   pos,
   size,
