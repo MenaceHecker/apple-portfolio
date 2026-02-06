@@ -3,7 +3,7 @@
 import { useSceneState } from "@/components/SceneState";
 
 export default function Projects() {
-  const { setActiveProject } = useSceneState();
+  const { setActiveProject, setHoverProject } = useSceneState();
 
   return (
     <div>
@@ -12,7 +12,9 @@ export default function Projects() {
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <button
           onClick={() => setActiveProject("nexus")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left hover:bg-white/10"
+          onMouseEnter={() => setHoverProject("nexus")}
+          onMouseLeave={() => setHoverProject(null)}
+          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10"
         >
           <div className="font-medium">Nexus</div>
           <div className="mt-2 text-sm text-white/60">
@@ -22,7 +24,9 @@ export default function Projects() {
 
         <button
           onClick={() => setActiveProject("inboxiq")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left hover:bg-white/10"
+          onMouseEnter={() => setHoverProject("inboxiq")}
+          onMouseLeave={() => setHoverProject(null)}
+          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10"
         >
           <div className="font-medium">InboxIQ</div>
           <div className="mt-2 text-sm text-white/60">
@@ -32,7 +36,9 @@ export default function Projects() {
 
         <button
           onClick={() => setActiveProject("pulseforge")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left hover:bg-white/10"
+          onMouseEnter={() => setHoverProject("pulseforge")}
+          onMouseLeave={() => setHoverProject(null)}
+          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10"
         >
           <div className="font-medium">PulseForge</div>
           <div className="mt-2 text-sm text-white/60">
