@@ -529,8 +529,8 @@ function HoverLabel({ enabled }: { enabled: boolean }) {
       const tx = base.x + driftX;
       const ty = base.y + driftY;
 
-      pos.current.x += (tx - pos.current.x) * 0.09;
-      pos.current.y += (ty - pos.current.y) * 0.09;
+      pos.current.x += (tx - pos.current.x) * 0.12;
+      pos.current.y += (ty - pos.current.y) * 0.12;
 
       node.style.left = `${pos.current.x}%`;
       node.style.top = `${pos.current.y}%`;
