@@ -7,6 +7,7 @@ import { useSceneState } from "@/components/SceneState";
 import * as THREE from "three";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
+import type { ProjectId } from "@/components/SceneState";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -46,10 +47,7 @@ type FlowSpec = {
   to: string;
 };
 
-const PROJECT_GRAPH: Record<
-  "nexus" | "inboxiq" | "pulseforge",
-  { nodes: NodeSpec[]; flows: FlowSpec[] }
-> = {
+const PROJECT_GRAPH: Record<ProjectId, { nodes: NodeSpec[]; flows: FlowSpec[] }> = {
   nexus: {
     nodes: [
       { id: "api", label: "Services", pos: [-1.6, 0.3, 0], size: [0.9, 0.35, 0.2] },
@@ -100,7 +98,74 @@ const PROJECT_GRAPH: Record<
       { from: "retry", to: "db" },
     ],
   },
+
+  "mini-ml-platform": {
+    nodes: [
+      { id: "api", label: "FastAPI", pos: [-1.6, 0.35, 0], size: [0.95, 0.36, 0.2] },
+      { id: "train", label: "Training", pos: [-0.3, 0.85, 0.1], size: [0.95, 0.4, 0.2] },
+      { id: "mlflow", label: "MLflow Registry", pos: [1.25, 0.55, 0], size: [1.25, 0.44, 0.2] },
+      { id: "infer", label: "Inference", pos: [0.85, -0.05, -0.1], size: [1.05, 0.42, 0.2] },
+      { id: "store", label: "Artifacts", pos: [-0.6, -0.35, 0], size: [0.95, 0.36, 0.2] },
+    ],
+    flows: [
+      { from: "api", to: "train" },
+      { from: "train", to: "mlflow" },
+      { from: "mlflow", to: "infer" },
+      { from: "infer", to: "store" },
+      { from: "api", to: "infer" },
+    ],
+  },
+
+  procuroid: {
+    nodes: [
+      { id: "agents", label: "Agents", pos: [-1.6, 0.35, 0], size: [0.95, 0.36, 0.2] },
+      { id: "gcp", label: "GCP", pos: [-0.2, 0.9, 0.1], size: [0.85, 0.38, 0.2] },
+      { id: "supabase", label: "Supabase", pos: [1.35, 0.55, 0], size: [1.05, 0.42, 0.2] },
+      { id: "twilio", label: "Twilio", pos: [0.95, -0.05, -0.1], size: [0.9, 0.36, 0.2] },
+      { id: "voice", label: "ElevenLabs", pos: [-0.35, -0.05, 0.2], size: [1.05, 0.36, 0.2] },
+    ],
+    flows: [
+      { from: "agents", to: "gcp" },
+      { from: "gcp", to: "supabase" },
+      { from: "agents", to: "twilio" },
+      { from: "agents", to: "voice" },
+      { from: "supabase", to: "twilio" },
+    ],
+  },
+
+  movieit: {
+    nodes: [
+      { id: "ui", label: "Swift UI", pos: [-1.55, 0.35, 0], size: [0.95, 0.36, 0.2] },
+      { id: "mvvm", label: "MVVM", pos: [-0.2, 0.9, 0.1], size: [0.85, 0.36, 0.2] },
+      { id: "api", label: "REST APIs", pos: [1.35, 0.55, 0], size: [1.0, 0.4, 0.2] },
+      { id: "trailers", label: "Trailers", pos: [0.9, -0.05, -0.1], size: [0.95, 0.36, 0.2] },
+      { id: "book", label: "Bookings", pos: [-0.6, -0.35, 0], size: [1.0, 0.38, 0.2] },
+    ],
+    flows: [
+      { from: "ui", to: "mvvm" },
+      { from: "mvvm", to: "api" },
+      { from: "api", to: "trailers" },
+      { from: "api", to: "book" },
+    ],
+  },
+
+  crumb: {
+    nodes: [
+      { id: "app", label: "React Native", pos: [-1.55, 0.35, 0], size: [1.05, 0.38, 0.2] },
+      { id: "realtime", label: "Realtime Feed", pos: [-0.2, 0.9, 0.1], size: [1.05, 0.4, 0.2] },
+      { id: "supabase", label: "Supabase", pos: [1.35, 0.55, 0], size: [1.0, 0.4, 0.2] },
+      { id: "nfc", label: "NFC Add", pos: [0.9, -0.05, -0.1], size: [0.85, 0.34, 0.2] },
+      { id: "push", label: "Push", pos: [-0.6, -0.35, 0], size: [0.75, 0.34, 0.2] },
+    ],
+    flows: [
+      { from: "app", to: "realtime" },
+      { from: "realtime", to: "supabase" },
+      { from: "supabase", to: "push" },
+      { from: "app", to: "nfc" },
+    ],
+  },
 };
+
 
 function CursorSpotlight({ enabled }: { enabled: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -300,7 +365,7 @@ function FlowLine({
   );
 }
 
-function FlowAnimator({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
+function FlowAnimator({ id }: { id: ProjectId }) {
   const spec = PROJECT_GRAPH[id];
 
   const byId = useMemo(
@@ -328,7 +393,7 @@ function FlowAnimator({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
   );
 }
 
-function ProjectExploded({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
+function ProjectExploded({ id }: { id: ProjectId }) {
   const spec = PROJECT_GRAPH[id];
 
   return (
