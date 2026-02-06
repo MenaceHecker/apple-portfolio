@@ -22,82 +22,6 @@ const MATERIAL_MOODS: Record<
   contact: { roughness: 0.28, clearcoatRoughness: 0.12, deform: 0.025 },
 };
 
-function HeroObject({ section }: { section: string }) {
-  const meshRef = useRef<THREE.Mesh | null>(null);
-
-  const geom = useMemo(() => {
-    const g = new THREE.IcosahedronGeometry(1.15, 32);
-    g.computeVertexNormals();
-    return g;
-  }, []);
-
-  const base = useMemo(() => {
-    const pos = geom.attributes.position.array as Float32Array;
-    return new Float32Array(pos);
-  }, [geom]);
-
-  const mat = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color("#f5f5f5"),
-        metalness: 1,
-        roughness: MATERIAL_MOODS.home.roughness,
-        clearcoat: 1,
-        clearcoatRoughness: MATERIAL_MOODS.home.clearcoatRoughness,
-        reflectivity: 1,
-      }),
-    []
-  );
-
-  const mood = useRef(MATERIAL_MOODS.home);
-
-  useEffect(() => {
-    mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
-  }, [section]);
-
-  useFrame((state) => {
-    const m = meshRef.current;
-    if (!m) return;
-
-    const t = state.clock.getElapsedTime();
-
-    m.rotation.y = t * 0.18;
-    m.rotation.x = 0.25 + Math.sin(t * 0.35) * 0.03;
-
-    const material = m.material as THREE.MeshPhysicalMaterial;
-    material.roughness += (mood.current.roughness - material.roughness) * 0.04;
-    material.clearcoatRoughness +=
-      (mood.current.clearcoatRoughness - material.clearcoatRoughness) * 0.04;
-
-    const posAttr = geom.attributes.position as THREE.BufferAttribute;
-    const pos = posAttr.array as Float32Array;
-
-    for (let i = 0; i < pos.length; i += 3) {
-      const ox = base[i];
-      const oy = base[i + 1];
-      const oz = base[i + 2];
-
-      const w1 = Math.sin(ox * 2.2 + t * 1.2);
-      const w2 = Math.sin(oy * 2.0 - t * 1.0);
-      const w3 = Math.sin(oz * 2.4 + t * 0.9);
-
-      const push = (w1 + w2 + w3) * mood.current.deform;
-      const scale = 1 + push;
-
-      pos[i] = ox * scale;
-      pos[i + 1] = oy * scale;
-      pos[i + 2] = oz * scale;
-    }
-
-    posAttr.needsUpdate = true;
-    geom.computeVertexNormals();
-  });
-
-  return (
-    <mesh ref={meshRef} geometry={geom} material={mat} position={[0, 0, 0]} />
-  );
-}
-
 const CAMERA_POSES: Record<
   string,
   { position: [number, number, number]; lookAt?: [number, number, number] }
@@ -201,9 +125,8 @@ function CursorSpotlight({ enabled }: { enabled: boolean }) {
     const tick = () => {
       const el = ref.current;
 
-      // ease toward cursor
-      pos.current.x += (target.current.x - pos.current.x) * 0.08;
-      pos.current.y += (target.current.y - pos.current.y) * 0.08;
+      pos.current.x += (target.current.x - pos.current.x) * 0.11;
+      pos.current.y += (target.current.y - pos.current.y) * 0.11;
 
       if (el) {
         el.style.setProperty("--sx", `${pos.current.x}%`);
@@ -225,12 +148,85 @@ function CursorSpotlight({ enabled }: { enabled: boolean }) {
       }`}
       style={{
         background:
-          "radial-gradient(650px circle at var(--sx, 50%) var(--sy, 35%), rgba(255,255,255,0.14), rgba(255,255,255,0.06) 35%, rgba(0,0,0,0) 70%)",
+        "radial-gradient(420px circle at var(--sx, 50%) var(--sy, 35%), rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.12) 22%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0) 62%)",
       }}
     />
   );
 }
 
+function HeroObject({ section }: { section: string }) {
+  const meshRef = useRef<THREE.Mesh | null>(null);
+
+  const geom = useMemo(() => {
+    const g = new THREE.IcosahedronGeometry(1.15, 32);
+    g.computeVertexNormals();
+    return g;
+  }, []);
+
+  const base = useMemo(() => {
+    const pos = geom.attributes.position.array as Float32Array;
+    return new Float32Array(pos);
+  }, [geom]);
+
+  const mat = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#f5f5f5"),
+        metalness: 1,
+        roughness: MATERIAL_MOODS.home.roughness,
+        clearcoat: 1,
+        clearcoatRoughness: MATERIAL_MOODS.home.clearcoatRoughness,
+        reflectivity: 1,
+      }),
+    []
+  );
+
+  const mood = useRef(MATERIAL_MOODS.home);
+
+  useEffect(() => {
+    mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
+  }, [section]);
+
+  useFrame((state) => {
+    const m = meshRef.current;
+    if (!m) return;
+
+    const t = state.clock.getElapsedTime();
+
+    m.rotation.y = t * 0.18;
+    m.rotation.x = 0.25 + Math.sin(t * 0.35) * 0.03;
+
+    const material = m.material as THREE.MeshPhysicalMaterial;
+    material.roughness += (mood.current.roughness - material.roughness) * 0.04;
+    material.clearcoatRoughness +=
+      (mood.current.clearcoatRoughness - material.clearcoatRoughness) * 0.04;
+
+    const posAttr = geom.attributes.position as THREE.BufferAttribute;
+    const pos = posAttr.array as Float32Array;
+
+    for (let i = 0; i < pos.length; i += 3) {
+      const ox = base[i];
+      const oy = base[i + 1];
+      const oz = base[i + 2];
+
+      const w1 = Math.sin(ox * 2.2 + t * 1.2);
+      const w2 = Math.sin(oy * 2.0 - t * 1.0);
+      const w3 = Math.sin(oz * 2.4 + t * 0.9);
+
+      const push = (w1 + w2 + w3) * mood.current.deform;
+      const scale = 1 + push;
+
+      pos[i] = ox * scale;
+      pos[i + 1] = oy * scale;
+      pos[i + 2] = oz * scale;
+    }
+
+    posAttr.needsUpdate = true;
+    geom.computeVertexNormals();
+  });
+
+  return <mesh ref={meshRef} geometry={geom} material={mat} position={[0, 0, 0]} />;
+}
 
 function NodeBox({
   pos,
@@ -262,15 +258,7 @@ function FlowLine({
     (a[2] + b[2]) / 2,
   ];
 
-  return (
-    <Line
-      points={[a, mid, b]}
-      lineWidth={1}
-      color="white"
-      transparent
-      opacity={0.35}
-    />
-  );
+  return <Line points={[a, mid, b]} lineWidth={1} color="white" transparent opacity={0.35} />;
 }
 
 function FlowAnimator({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
@@ -428,14 +416,7 @@ function CameraRig() {
   }, []);
 
   return (
-    <PerspectiveCamera
-      ref={cameraRef}
-      makeDefault
-      fov={45}
-      position={[0.2, 0.1, 6.2]}
-      near={0.1}
-      far={100}
-    />
+    <PerspectiveCamera ref={cameraRef} makeDefault fov={45} position={[0.2, 0.1, 6.2]} near={0.1} far={100} />
   );
 }
 
@@ -467,9 +448,7 @@ export default function Scene() {
   return (
     <div
       className={`pointer-events-none fixed inset-0 z-0 transition duration-500 ${
-        activeProject
-          ? "blur-[4px] brightness-75 saturate-90"
-          : "blur-0 brightness-100 saturate-100"
+        activeProject ? "blur-[4px] brightness-75 saturate-90" : "blur-0 brightness-100 saturate-100"
       }`}
     >
       <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
@@ -491,6 +470,9 @@ export default function Scene() {
 
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/70 to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,255,255,0.10),transparent_55%)]" />
+
+      <CursorSpotlight enabled={!activeProject} />
+
       <div
         className={`absolute inset-0 transition duration-500 ${
           activeProject ? "opacity-100" : "opacity-0"
