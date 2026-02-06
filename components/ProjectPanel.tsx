@@ -1,34 +1,32 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSceneState } from "@/components/SceneState";
+import { useSceneState, ProjectId } from "@/components/SceneState";
 
-const PROJECTS = {
+const PROJECTS: Record<ProjectId, { title: string; subtitle: string; bullets: string[]; stack: string[] }> = {
   nexus: {
     title: "Nexus",
-    summary: "Distributed observability stack with SLO-based monitoring.",
+    subtitle: "Distributed observability stack",
     bullets: [
-      "SLO dashboards and error budgets",
-      "Prometheus + Grafana metrics pipeline",
-      "Log aggregation and root-cause analysis",
+      "SLO-based monitoring with alerts and error budgets",
+      "Metrics + logs pipeline with dashboards and drill-downs",
+      "Failure simulation to validate resilience",
     ],
-    stack: ["Python", "Prometheus", "Grafana", "ELK", "Postgres"],
+    stack: ["Python", "Flask", "Prometheus", "Grafana", "ELK", "PostgreSQL"],
   },
-
   inboxiq: {
     title: "InboxIQ",
-    summary: "Email organizer with Gmail/Outlook integrations.",
+    subtitle: "Intelligent email organizer",
     bullets: [
-      "Unified inbox categorization",
-      "OAuth-based provider integrations",
-      "Search-first, productivity-focused UX",
+      "Gmail/Outlook sync with smart categorization",
+      "Search + labeling workflows for high-volume inboxes",
+      "Auth-first architecture with clean UX flows",
     ],
-    stack: ["Next.js", "TypeScript", "Prisma", "AWS"],
+    stack: ["Next.js", "TypeScript", "Prisma", "Auth", "Search"],
   },
-
   pulseforge: {
     title: "PulseForge",
-    summary: "Event-driven backend platform for reliable async processing.",
+    subtitle: "Event-driven backend platform for reliable async processing",
     bullets: [
       "Asynchronous event ingestion and processing",
       "Retry logic, idempotency, and failure handling",
@@ -36,73 +34,110 @@ const PROJECTS = {
     ],
     stack: ["Java", "Spring Boot", "PostgreSQL", "JWT", "Async"],
   },
-} as const;
+};
 
 export default function ProjectPanel() {
   const { activeProject, setActiveProject } = useSceneState();
-
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => {
-    if (!activeProject) return;
+  const isOpen = !!activeProject;
+  const p = activeProject ? PROJECTS[activeProject] : null;
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // focus + esc close
     closeBtnRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setActiveProject(null);
     };
 
+    // lock scroll
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [activeProject, setActiveProject]);
-
-  if (!activeProject) return null;
-
-  const p = PROJECTS[activeProject];
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen, setActiveProject]);
 
   return (
-    <div className="fixed inset-0 z-30">
-      {/* Backdrop */}
-      <button
-        aria-label="Close panel"
+    <div
+      className={`fixed inset-0 z-50 transition ${
+        isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+      }`}
+      aria-hidden={!isOpen}
+    >
+      {/* scrim */}
+      <div
+        className={`absolute inset-0 transition duration-300 ${
+          isOpen ? "bg-black/45" : "bg-black/0"
+        }`}
         onClick={() => setActiveProject(null)}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
 
-      {/* Panel */}
-      <aside className="absolute right-0 top-0 h-full w-full max-w-md border-l border-white/10 bg-black/80 p-6 backdrop-blur-xl animate-[panelIn_500ms_ease-out]">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">{p.title}</h3>
-            <p className="mt-2 text-sm text-white/60">{p.summary}</p>
+      {/* sheet */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 mx-auto max-w-3xl px-4 pb-6 transition duration-500 ${
+          isOpen ? "translate-y-0" : "translate-y-8"
+        }`}
+      >
+        <div className="rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
+          <div className="flex items-start justify-between gap-4 px-6 pt-6">
+            <div>
+              <div className="text-xl font-semibold tracking-tight">{p?.title}</div>
+              <div className="mt-1 text-sm text-white/65">{p?.subtitle}</div>
+            </div>
+
+            <button
+              ref={closeBtnRef}
+              onClick={() => setActiveProject(null)}
+              className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-sm text-white/80 hover:bg-white/12"
+            >
+              Close
+            </button>
           </div>
 
-          <button
-            ref={closeBtnRef}
-            onClick={() => setActiveProject(null)}
-            className="rounded-full border border-white/10 px-3 py-1 text-xs hover:bg-white/10"
-          >
-            Close
-          </button>
+          <div className="px-6 pb-6 pt-5">
+            <div className="text-sm font-medium text-white/85">Highlights</div>
+            <ul className="mt-3 space-y-2 text-sm text-white/70">
+              {p?.bullets.map((b) => (
+                <li key={b} className="leading-relaxed">
+                  <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full bg-white/60" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6 text-sm font-medium text-white/85">Stack</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {p?.stack.map((s) => (
+                <span
+                  key={s}
+                  className="rounded-full border border-white/12 bg-white/6 px-3 py-1 text-xs text-white/75"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:opacity-90">
+                View GitHub
+              </button>
+              <button className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white/80 hover:bg-white/12">
+                Read Case Study
+              </button>
+            </div>
+          </div>
         </div>
 
-        <ul className="mt-6 space-y-2 text-sm text-white/70">
-          {p.bullets.map((b) => (
-            <li key={b}>• {b}</li>
-          ))}
-        </ul>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {p.stack.map((s) => (
-            <span
-              key={s}
-              className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      </aside>
+        {/* tiny home indicator */}
+        <div className="mx-auto mt-3 h-1.5 w-20 rounded-full bg-white/20" />
+      </div>
     </div>
   );
 }
