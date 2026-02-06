@@ -148,7 +148,7 @@ function CursorSpotlight({ enabled }: { enabled: boolean }) {
       }`}
       style={{
         background:
-        "radial-gradient(420px circle at var(--sx, 50%) var(--sy, 35%), rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.12) 22%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0) 62%)",
+          "radial-gradient(420px circle at var(--sx, 50%) var(--sy, 35%), rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.12) 22%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0) 62%)",
       }}
     />
   );
@@ -183,26 +183,23 @@ function HeroObject({ section }: { section: string }) {
   );
 
   const mood = useRef(MATERIAL_MOODS.home);
-
   const hoverTarget = useRef({ x: 0, y: 0 });
   const hoverPull = useRef(0);
-
 
   useEffect(() => {
     mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
   }, [section]);
 
   useEffect(() => {
-  if (!hoverProject) {
-    hoverTarget.current = { x: 0, y: 0 };
-    return;
-  }
+    if (!hoverProject) {
+      hoverTarget.current = { x: 0, y: 0 };
+      return;
+    }
 
-  if (hoverProject === "nexus") hoverTarget.current = { x: -0.7, y: 0.25 };
-  if (hoverProject === "inboxiq") hoverTarget.current = { x: 0.0, y: 0.35 };
-  if (hoverProject === "pulseforge") hoverTarget.current = { x: 0.7, y: 0.25 };
-}, [hoverProject]);
-
+    if (hoverProject === "nexus") hoverTarget.current = { x: -0.7, y: 0.25 };
+    if (hoverProject === "inboxiq") hoverTarget.current = { x: 0.0, y: 0.35 };
+    if (hoverProject === "pulseforge") hoverTarget.current = { x: 0.7, y: 0.25 };
+  }, [hoverProject]);
 
   useFrame((state) => {
     const m = meshRef.current;
@@ -213,13 +210,26 @@ function HeroObject({ section }: { section: string }) {
     m.rotation.y = t * 0.18;
     m.rotation.x = 0.25 + Math.sin(t * 0.35) * 0.03;
 
+    hoverPull.current += ((hoverProject ? 1 : 0) - hoverPull.current) * 0.06;
+
     const material = m.material as THREE.MeshPhysicalMaterial;
+
+    // base material interpolation per section
     material.roughness += (mood.current.roughness - material.roughness) * 0.04;
     material.clearcoatRoughness +=
       (mood.current.clearcoatRoughness - material.clearcoatRoughness) * 0.04;
 
+    material.roughness += (-0.02 * hoverPull.current) * 0.02;
+
     const posAttr = geom.attributes.position as THREE.BufferAttribute;
     const pos = posAttr.array as Float32Array;
+
+    // tension boost on hover
+    const deform = mood.current.deform * (1 + hoverPull.current * 0.35);
+
+    // directional bias toward hovered card
+    const hx = hoverTarget.current.x;
+    const hy = hoverTarget.current.y;
 
     for (let i = 0; i < pos.length; i += 3) {
       const ox = base[i];
@@ -230,9 +240,10 @@ function HeroObject({ section }: { section: string }) {
       const w2 = Math.sin(oy * 2.0 - t * 1.0);
       const w3 = Math.sin(oz * 2.4 + t * 0.9);
 
-      const push = (w1 + w2 + w3) * mood.current.deform;
-      const scale = 1 + push;
+      const dir = ox * hx + oy * hy;
+      const push = (w1 + w2 + w3) * deform + dir * 0.03 * hoverPull.current;
 
+      const scale = 1 + push;
       pos[i] = ox * scale;
       pos[i + 1] = oy * scale;
       pos[i + 2] = oz * scale;
@@ -242,7 +253,9 @@ function HeroObject({ section }: { section: string }) {
     geom.computeVertexNormals();
   });
 
-  return <mesh ref={meshRef} geometry={geom} material={mat} position={[0, 0, 0]} />;
+  return (
+    <mesh ref={meshRef} geometry={geom} material={mat} position={[0, 0, 0]} />
+  );
 }
 
 function NodeBox({
@@ -275,7 +288,15 @@ function FlowLine({
     (a[2] + b[2]) / 2,
   ];
 
-  return <Line points={[a, mid, b]} lineWidth={1} color="white" transparent opacity={0.35} />;
+  return (
+    <Line
+      points={[a, mid, b]}
+      lineWidth={1}
+      color="white"
+      transparent
+      opacity={0.35}
+    />
+  );
 }
 
 function FlowAnimator({ id }: { id: "nexus" | "inboxiq" | "pulseforge" }) {
@@ -433,7 +454,14 @@ function CameraRig() {
   }, []);
 
   return (
-    <PerspectiveCamera ref={cameraRef} makeDefault fov={45} position={[0.2, 0.1, 6.2]} near={0.1} far={100} />
+    <PerspectiveCamera
+      ref={cameraRef}
+      makeDefault
+      fov={45}
+      position={[0.2, 0.1, 6.2]}
+      near={0.1}
+      far={100}
+    />
   );
 }
 
@@ -465,7 +493,9 @@ export default function Scene() {
   return (
     <div
       className={`pointer-events-none fixed inset-0 z-0 transition duration-500 ${
-        activeProject ? "blur-[4px] brightness-75 saturate-90" : "blur-0 brightness-100 saturate-100"
+        activeProject
+          ? "blur-[4px] brightness-75 saturate-90"
+          : "blur-0 brightness-100 saturate-100"
       }`}
     >
       <Canvas dpr={[1, 2]} gl={{ antialias: true }} camera={{ fov: 45 }}>
