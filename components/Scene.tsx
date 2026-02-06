@@ -155,6 +155,7 @@ function CursorSpotlight({ enabled }: { enabled: boolean }) {
 }
 
 function HeroObject({ section }: { section: string }) {
+  const { hoverProject } = useSceneState();
   const meshRef = useRef<THREE.Mesh | null>(null);
 
   const geom = useMemo(() => {
