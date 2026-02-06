@@ -16,6 +16,8 @@ export default function Projects() {
   onMouseLeave={() => {
     setTimeout(() => setHoverProject(null), 80);
   }}
+  data-project="nexus"
+
   className="
     rounded-2xl
     border border-white/10
@@ -47,6 +49,7 @@ export default function Projects() {
   onMouseLeave={() => {
     setTimeout(() => setHoverProject(null), 80);
   }}
+  data-project="inboxiq"
   className="
     rounded-2xl
     border border-white/10
@@ -78,6 +81,8 @@ export default function Projects() {
   onMouseLeave={() => {
     setTimeout(() => setHoverProject(null), 80);
   }}
+  data-project="pulseforge"
+
   className="
     rounded-2xl
     border border-white/10
