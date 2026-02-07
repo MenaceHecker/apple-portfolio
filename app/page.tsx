@@ -33,11 +33,17 @@ export default function Page() {
       <main className="relative min-h-screen bg-black text-white">
         {!splashDone && (
           <SplashScreen
-            onDone={() => setSplashDone(true)}
             durationMs={1400}
             showOncePerSession
-          />
-        )}
+            onDone={() => {
+          setSplashDone(true);
+          requestAnimationFrame(() => {
+          window.dispatchEvent(new CustomEvent("tm:intro"));
+          });
+        }}
+      />
+    )}
+
 
         <Scene />
         <Navbar sections={sections} />
