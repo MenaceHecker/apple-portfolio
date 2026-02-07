@@ -4,9 +4,15 @@ export default function Hero() {
   return (
     <div className="mx-auto max-w-6xl px-6 pt-20 md:pt-24">
       <div className="max-w-3xl">
-        <div className="text-sm text-white/55">Tushar Mishra</div>
+        <div className="text-sm text-white/55">
+          Tushar Mishra
+        </div>
 
-        <h1 className="mt-4 text-5xl font-semibold tracking-tight md:text-7xl">
+        <div className="mt-1 text-sm text-white/45">
+          Computer Science Graduate · University of Georgia
+        </div>
+
+        <h1 className="mt-5 text-5xl font-semibold tracking-tight md:text-7xl">
           Software Engineer.
           <span className="block text-white/65">
             Backend systems, cloud platforms, and reliability.
