@@ -8,7 +8,7 @@ export default function Section({
   return (
     <section
       id={id}
-      className="scroll-mt-24 py-20 md:py-24"
+      className="scroll-mt-24 py-12 md:py-16"
     >
       {children}
     </section>
