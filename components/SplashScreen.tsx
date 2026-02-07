@@ -88,7 +88,7 @@ export default function SplashScreen({
         className={[
           "relative flex flex-col items-center",
           "transition-all duration-700 ease-out",
-          exiting ? "scale-[0.985] blur-[1px]" : "scale-100 blur-0",
+          exiting ? "scale-[0.985]" : "scale-100",
         ].join(" ")}
       >
         <div className="relative h-[160px] w-[160px] md:h-[200px] md:w-[200px]">
