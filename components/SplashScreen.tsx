@@ -13,6 +13,12 @@ export default function SplashScreen({
   durationMs = 2000,
   showOncePerSession = true,
 }: Props) {
-  const [visible, setVisible] = useState(false);
+  const [phase, setPhase] = useState<"in" | "out">("in");
+  const [hidden, setHidden] = useState(false);
+
+  const reduceMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  }, []);
 }
 
