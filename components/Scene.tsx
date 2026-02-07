@@ -504,6 +504,53 @@ function CameraRig() {
     };
   }, [activeProject]);
 
+useEffect(() => {
+  const cam = cameraRef.current;
+  if (!cam) return;
+
+  const runIntro = () => {
+    if (activeProject) return;
+
+    gsap.killTweensOf(cam.position);
+    gsap.killTweensOf(cam);
+
+    const z0 = cam.position.z;
+    const fov0 = cam.fov;
+
+    gsap.to(cam.position, {
+      z: z0 - 0.22,
+      duration: 0.18,
+      ease: "power3.out",
+    });
+
+    gsap.to(cam.position, {
+      z: z0,
+      duration: 0.55,
+      delay: 0.18,
+      ease: "power3.out",
+    });
+
+    gsap.to(cam, {
+      fov: Math.max(38, fov0 - 4),
+      duration: 0.16,
+      ease: "power2.out",
+      onUpdate: () => cam.updateProjectionMatrix(),
+    });
+
+    gsap.to(cam, {
+      fov: fov0,
+      duration: 0.65,
+      delay: 0.16,
+      ease: "power3.out",
+      onUpdate: () => cam.updateProjectionMatrix(),
+    });
+  };
+
+  window.addEventListener("tm:intro", runIntro as EventListener);
+  return () => window.removeEventListener("tm:intro", runIntro as EventListener);
+}, [activeProject]);
+
+
   useEffect(() => {
     const cam = cameraRef.current;
     if (!cam) return;
