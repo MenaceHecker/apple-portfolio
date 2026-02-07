@@ -10,6 +10,7 @@ import Projects from "@/components/sections/Projects";
 import Skills from "@/components/sections/Skills";
 import Contact from "@/components/sections/Contact";
 import ProjectPanel from "@/components/ProjectPanel";
+import Experience from "@/components/sections/Experience";
 import { SceneStateProvider } from "@/components/SceneState";
 import Footer from "@/components/sections/Footer";
 import SplashScreen from "@/components/SplashScreen";
@@ -22,6 +23,7 @@ export default function Page() {
       { id: "home", label: "Home" },
       { id: "themes", label: "Themes" },
       { id: "projects", label: "Projects" },
+      { id: "experience", label: "Experience" },
       { id: "skills", label: "Skills" },
       { id: "contact", label: "Contact" },
     ],
@@ -60,6 +62,10 @@ export default function Page() {
 
           <Section id="projects">
             <Projects />
+          </Section>
+
+          <Section id="experience">
+            <Experience />
           </Section>
 
           <Section id="skills">
