@@ -2,7 +2,7 @@
 
 export default function Footer() {
   return (
-    <footer className="mx-auto max-w-6xl px-6 pb-10 pt-12">
+    <footer className="mx-auto max-w-6xl px-6 pt-12">
       <div className="border-t border-white/10 pt-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="text-xs text-white/45">

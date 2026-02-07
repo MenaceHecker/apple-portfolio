@@ -12,6 +12,7 @@ import Skills from "@/components/sections/Skills";
 import Contact from "@/components/sections/Contact";
 import ProjectPanel from "@/components/ProjectPanel";
 import { SceneStateProvider } from "@/components/SceneState";
+import Footer from "@/components/sections/Footer";
 
 
 export default function Page() {
@@ -57,6 +58,10 @@ export default function Page() {
 
           <Section id="contact">
             <Contact />
+          </Section>
+
+          <Section id="footer">
+            <Footer />
           </Section>
         </div>
       </main>
