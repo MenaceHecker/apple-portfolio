@@ -16,6 +16,14 @@ export default function SplashScreen({
   const [phase, setPhase] = useState<"enter" | "hold" | "exit">("enter");
   const [hidden, setHidden] = useState(false);
 
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+
   const reduceMotion = useMemo(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
@@ -94,7 +102,7 @@ export default function SplashScreen({
         <div className="relative h-[160px] w-[160px] md:h-[200px] md:w-[200px]">
           <div className="tm-orb2 absolute inset-0 rounded-full" />
           <div className="tm-orbGlow2 absolute inset-0 rounded-full" />
-          <div className="tm-glint absolute inset-0 rounded-full" />
+          <div className={`absolute inset-0 rounded-full ${ready ? "tm-glint" : ""}`} />
         </div>
 
         <div className="mt-9 text-center">
@@ -110,7 +118,7 @@ export default function SplashScreen({
               Tushar Mishra
             </div>
 
-            <div className="tm-textShine pointer-events-none absolute inset-0" />
+            <div className={`tm-textShine pointer-events-none absolute inset-0 ${ready ? "" : "opacity-0"}`} />
           </div>
 
           <div className="mt-2 overflow-hidden">
@@ -128,7 +136,7 @@ export default function SplashScreen({
         </div>
 
         <div className="mt-10 h-[2px] w-[220px] overflow-hidden rounded-full bg-white/10">
-          <div className="tm-progress h-full w-full" />
+          <div className={`h-full w-full ${ready ? "tm-progress" : ""}`} />
         </div>
       </div>
     </div>

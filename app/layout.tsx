@@ -2,13 +2,16 @@ import "./globals.css";
 
 export const metadata = {
   title: "Tushar Mishra — Portfolio",
-  description: "Apple-ish 3D portfolio SPA",
+  description: "3D portfolio SPA",
 };
+
+import { Inter } from "next/font/google";
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
