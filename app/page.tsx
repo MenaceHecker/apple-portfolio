@@ -1,27 +1,27 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Scene from "@/components/Scene";
 import Section from "@/components/Section";
 import Hero from "@/components/sections/Hero";
 import Themes from "@/components/sections/Themes";
 import Projects from "@/components/sections/Projects";
-import Experience from "@/components/sections/Experience";
 import Skills from "@/components/sections/Skills";
 import Contact from "@/components/sections/Contact";
 import ProjectPanel from "@/components/ProjectPanel";
 import { SceneStateProvider } from "@/components/SceneState";
 import Footer from "@/components/sections/Footer";
-
+import SplashScreen from "@/components/SplashScreen";
 
 export default function Page() {
+  const [splashDone, setSplashDone] = useState(false);
+
   const sections = useMemo(
     () => [
       { id: "home", label: "Home" },
       { id: "themes", label: "Themes" },
       { id: "projects", label: "Projects" },
-      { id: "experience", label: "Experience" },
       { id: "skills", label: "Skills" },
       { id: "contact", label: "Contact" },
     ],
@@ -31,6 +31,14 @@ export default function Page() {
   return (
     <SceneStateProvider>
       <main className="relative min-h-screen bg-black text-white">
+        {!splashDone && (
+          <SplashScreen
+            onDone={() => setSplashDone(true)}
+            durationMs={1400}
+            showOncePerSession
+          />
+        )}
+
         <Scene />
         <Navbar sections={sections} />
         <ProjectPanel />
@@ -46,10 +54,6 @@ export default function Page() {
 
           <Section id="projects">
             <Projects />
-          </Section>
-
-          <Section id="experience">
-            <Experience />
           </Section>
 
           <Section id="skills">
