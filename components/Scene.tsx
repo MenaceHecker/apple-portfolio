@@ -2,12 +2,13 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Environment, PerspectiveCamera, Line } from "@react-three/drei";
+import { Environment, PerspectiveCamera, Line, Float, MeshTransmissionMaterial } from "@react-three/drei";
 import { useSceneState } from "@/components/SceneState";
 import * as THREE from "three";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import type { ProjectId } from "@/components/SceneState";
+
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -658,6 +659,100 @@ function HoverLabel({ enabled }: { enabled: boolean }) {
     </div>
   );
 }
+
+function GlassSheets() {
+  return (
+    <group position={[0, 0, 0]}>
+      <Float speed={1.2} rotationIntensity={0.4} floatIntensity={0.6}>
+        <mesh position={[-0.9, 0.15, -0.2]} rotation={[0.2, 0.4, 0.1]}>
+          <boxGeometry args={[1.7, 0.08, 1.1]} />
+          <MeshTransmissionMaterial
+            thickness={0.45}
+            roughness={0.08}
+            transmission={1}
+            ior={1.35}
+            chromaticAberration={0.03}
+            anisotropy={0.2}
+          />
+        </mesh>
+      </Float>
+
+      <Float speed={1.0} rotationIntensity={0.35} floatIntensity={0.55}>
+        <mesh position={[0.7, -0.1, -0.35]} rotation={[-0.15, -0.25, 0.05]}>
+          <boxGeometry args={[1.5, 0.08, 1.0]} />
+          <MeshTransmissionMaterial
+            thickness={0.4}
+            roughness={0.1}
+            transmission={1}
+            ior={1.33}
+            chromaticAberration={0.025}
+            anisotropy={0.15}
+          />
+        </mesh>
+      </Float>
+    </group>
+  );
+}
+
+function TimelineRibbon() {
+  return (
+    <Float speed={0.9} rotationIntensity={0.2} floatIntensity={0.35}>
+      <mesh rotation={[0.25, 0.55, 0]}>
+        <torusGeometry args={[1.25, 0.06, 40, 260]} />
+        <meshStandardMaterial metalness={1} roughness={0.12} color="#ffffff" />
+      </mesh>
+    </Float>
+  );
+}
+
+function SkillsOrbit() {
+  return (
+    <group>
+      {Array.from({ length: 10 }).map((_, i) => {
+        const a = (i / 10) * Math.PI * 2;
+        const r = 1.6;
+        return (
+          <Float key={i} speed={1.1} rotationIntensity={0.4} floatIntensity={0.5}>
+            <mesh position={[Math.cos(a) * r, Math.sin(a) * 0.45, Math.sin(a) * r * 0.25]}>
+              <capsuleGeometry args={[0.28, 0.5, 10, 18]} />
+              <meshStandardMaterial metalness={0.85} roughness={0.18} color="#ffffff" />
+            </mesh>
+          </Float>
+        );
+      })}
+    </group>
+  );
+}
+
+function ContactHalo() {
+  return (
+    <Float speed={0.7} rotationIntensity={0.25} floatIntensity={0.25}>
+      <mesh rotation={[0.1, 0.2, 0]}>
+        <torusKnotGeometry args={[1.05, 0.03, 320, 22]} />
+        <meshStandardMaterial metalness={0.4} roughness={0.55} color="#ffffff" transparent opacity={0.55} />
+      </mesh>
+    </Float>
+  );
+}
+
+function SectionModel({
+  section,
+  activeProject,
+}: {
+  section: string;
+  activeProject: boolean;
+}) {
+
+  if (activeProject) return null;
+
+  if (section === "themes") return <GlassSheets />;
+  if (section === "experience") return <TimelineRibbon />;
+  if (section === "skills") return <SkillsOrbit />;
+  if (section === "contact") return <ContactHalo />;
+
+  return null;
+}
+
 
 
 
