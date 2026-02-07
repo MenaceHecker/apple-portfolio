@@ -801,8 +801,15 @@ export default function Scene() {
         </Suspense>
 
         <group>
-          {!activeProject && <HeroObject section={activeSection} />}
-          {activeProject && <ProjectExploded id={activeProject} />}
+          {activeProject ? (
+          <ProjectExploded id={activeProject} />
+            ) : (
+            <>
+        <HeroObject section={activeSection} />
+        <SectionModel section={activeSection} activeProject={false} />
+  </>
+)}
+
         </group>
       </Canvas>
 
