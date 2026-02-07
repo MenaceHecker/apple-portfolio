@@ -86,8 +86,6 @@ export default function Projects() {
             type="button"
             data-project={p.id}
             onClick={open(p.id)}
-            onMouseEnter={() => setHoverProject(p.id)}
-            onMouseLeave={leave}
             className="group relative rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.985]"
           >
             <div className="font-medium tracking-tight">{p.title}</div>
