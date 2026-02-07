@@ -43,7 +43,7 @@ const PROJECTS: {
     title: "Procuroid",
     subtitle: "Autonomous multi-agent procurement platform (AI ATL 2025 HM)",
     stack: "Python · Flask · GCP · Supabase · Twilio · ElevenLabs",
-    github: "https://github.com/MenaceHecker/procuroid",
+    github: "https://github.com/avihhan/AIATL25",
   },
   {
     id: "movieit",
