@@ -22,7 +22,7 @@ const PROJECTS: {
     title: "InboxIQ",
     subtitle: "Intelligent email organizer",
     stack: "Next.js · TypeScript · Prisma · AWS",
-    github: "https://github.com/MenaceHecker/inboxiq",
+    github: "https://github.com/MenaceHecker/smart-email-organizer",
   },
   {
     id: "pulseforge",
