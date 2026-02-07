@@ -4,16 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 
 type Props = {
   onDone: () => void;
-  durationMs?: number;
+  durationMs?: number; // total time before exit starts
   showOncePerSession?: boolean;
 };
 
 export default function SplashScreen({
   onDone,
-  durationMs = 1400,
+  durationMs = 3000,
   showOncePerSession = true,
 }: Props) {
-  const [phase, setPhase] = useState<"in" | "out">("in");
+  const [phase, setPhase] = useState<"enter" | "hold" | "exit">("enter");
   const [hidden, setHidden] = useState(false);
 
   const reduceMotion = useMemo(() => {
@@ -33,8 +33,9 @@ export default function SplashScreen({
         sessionStorage.setItem(key, "1");
       }
     } catch {
-      // ignore sessionStorage errors
+      // ignore
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -44,70 +45,81 @@ export default function SplashScreen({
       const t = window.setTimeout(() => {
         setHidden(true);
         onDone();
-      }, 250);
+      }, 450);
       return () => window.clearTimeout(t);
     }
 
-    const t1 = window.setTimeout(() => setPhase("out"), durationMs);
-    const t2 = window.setTimeout(() => {
+    const tEnter = window.setTimeout(() => setPhase("hold"), 520);
+    const tExit = window.setTimeout(() => setPhase("exit"), durationMs);
+    const tDone = window.setTimeout(() => {
       setHidden(true);
       onDone();
-    }, durationMs + 420);
+    }, durationMs + 650);
 
     return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      window.clearTimeout(tEnter);
+      window.clearTimeout(tExit);
+      window.clearTimeout(tDone);
     };
   }, [durationMs, hidden, onDone, reduceMotion]);
 
   if (hidden) return null;
 
+  const exiting = phase === "exit";
+
   return (
     <div
       className={[
         "fixed inset-0 z-[60] grid place-items-center bg-black",
-        "transition-opacity duration-500",
-        phase === "out" ? "opacity-0" : "opacity-100",
+        "transition-opacity duration-700",
+        exiting ? "opacity-0" : "opacity-100",
       ].join(" ")}
       aria-label="Loading"
     >
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.12),transparent_55%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/70 to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.14),transparent_58%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.08),transparent_55%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black" />
         <div className="tm-grain absolute inset-0 opacity-[0.22]" />
+        <div className={`tm-vignette absolute inset-0 ${exiting ? "opacity-0" : "opacity-100"} transition-opacity duration-700`} />
       </div>
 
       <div
         className={[
           "relative flex flex-col items-center",
-          "transition-transform duration-700",
-          phase === "out" ? "scale-[0.98]" : "scale-100",
+          "transition-all duration-700 ease-out",
+          exiting ? "scale-[0.985] blur-[1px]" : "scale-100 blur-0",
         ].join(" ")}
       >
-        <div className="relative h-[140px] w-[140px] md:h-[170px] md:w-[170px]">
-          <div className="tm-orb absolute inset-0 rounded-full" />
-          <div className="tm-orbGlow absolute inset-0 rounded-full" />
+        <div className="relative h-[160px] w-[160px] md:h-[200px] md:w-[200px]">
+          <div className="tm-orb2 absolute inset-0 rounded-full" />
+          <div className="tm-orbGlow2 absolute inset-0 rounded-full" />
+          <div className="tm-glint absolute inset-0 rounded-full" />
         </div>
 
-        <div className="mt-8 text-center">
-          <div className="overflow-hidden">
+        <div className="mt-9 text-center">
+          <div className="relative overflow-hidden">
             <div
               className={[
-                "text-[20px] md:text-[22px] font-semibold tracking-tight text-white/90",
+                "text-[22px] md:text-[24px] font-semibold tracking-tight text-white/92",
                 "transition-transform duration-700 ease-out",
-                phase === "out" ? "translate-y-2" : "translate-y-0",
+                phase === "enter" ? "translate-y-6" : "translate-y-0",
+                exiting ? "translate-y-1" : "",
               ].join(" ")}
             >
               Tushar Mishra
             </div>
+
+            <div className="tm-textShine pointer-events-none absolute inset-0" />
           </div>
 
           <div className="mt-2 overflow-hidden">
             <div
               className={[
-                "text-xs md:text-sm text-white/55 tracking-[0.18em] uppercase",
+                "text-xs md:text-sm text-white/55 tracking-[0.22em] uppercase",
                 "transition-transform duration-700 ease-out delay-75",
-                phase === "out" ? "translate-y-2" : "translate-y-0",
+                phase === "enter" ? "translate-y-5" : "translate-y-0",
+                exiting ? "translate-y-1" : "",
               ].join(" ")}
             >
               Software Engineer
@@ -115,9 +127,8 @@ export default function SplashScreen({
           </div>
         </div>
 
-        {/* Thin loading line */}
-        <div className="mt-10 h-[2px] w-[180px] overflow-hidden rounded-full bg-white/10">
-          <div className="tm-bar h-full w-1/2 rounded-full bg-white/45" />
+        <div className="mt-10 h-[2px] w-[220px] overflow-hidden rounded-full bg-white/10">
+          <div className="tm-progress h-full w-full" />
         </div>
       </div>
     </div>

@@ -33,7 +33,7 @@ export default function Page() {
       <main className="relative min-h-screen bg-black text-white">
         {!splashDone && (
           <SplashScreen
-            durationMs={1400}
+            durationMs={3000}
             showOncePerSession
             onDone={() => {
           setSplashDone(true);
