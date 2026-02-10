@@ -81,6 +81,7 @@ export default function Skills() {
           title="Mobile Development"
           items={[
             "Swift (iOS)",
+            "Kotlin (Android)",
             "MVVM Architecture",
             "React Native",
             "Expo",
