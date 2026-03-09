@@ -36,15 +36,15 @@ export default function Page() {
         {!splashDone && (
           <SplashScreen
             durationMs={3000}
-            showOncePerSession
+            showOncePerSession={false}
             onDone={() => {
-          setSplashDone(true);
-          requestAnimationFrame(() => {
-          window.dispatchEvent(new CustomEvent("tm:intro"));
-          });
-        }}
-      />
-    )}
+              setSplashDone(true);
+              requestAnimationFrame(() => {
+                window.dispatchEvent(new CustomEvent("tm:intro"));
+              });
+            }}
+          />
+        )}
 
 
         <Scene />
