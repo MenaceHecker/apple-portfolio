@@ -70,7 +70,7 @@ const PROJECTS: Record<ProjectId, ProjectInfo> = {
       "Designed for extensibility: tools, agents, and integrations.",
     ],
     stack: ["Python", "Flask", "GCP", "Supabase", "TypeScript", "Twilio", "ElevenLabs"],
-    github: "https://github.com/avihhan/AIATL25",
+    github: "https://github.com/MenaceHecker/procuroid",
   },
 
   movieit: {
