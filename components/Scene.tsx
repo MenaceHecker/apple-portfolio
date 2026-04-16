@@ -352,138 +352,184 @@ function DepthParticles() {
 // ─── HeroObject ───────────────────────────────────────────────────────────────
 function HeroObject({ section }: { section: string }) {
   const { hoverProject } = useSceneState();
-  const meshRef = useRef<THREE.Mesh | null>(null);
+  const rootRef = useRef<THREE.Group>(null);
 
-  const geom = useMemo(() => {
-    const g = new THREE.IcosahedronGeometry(1.15, 32);
-    g.computeVertexNormals();
-    return g;
-  }, []);
-
-  const base = useMemo(() => {
-    const pos = geom.attributes.position.array as Float32Array;
-    return new Float32Array(pos);
-  }, [geom]);
-
-  const mat = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        color:              new THREE.Color(MATERIAL_MOODS.home.color),
-        metalness:          1,
-        roughness:          MATERIAL_MOODS.home.roughness,
-        clearcoat:          1,
-        clearcoatRoughness: MATERIAL_MOODS.home.clearcoatRoughness,
-        reflectivity:       1,
-        envMapIntensity:    MATERIAL_MOODS.home.envIntensity,
-      }),
-    []
-  );
-
-  const mood        = useRef(MATERIAL_MOODS.home);
-  const hoverTarget = useRef({ x: 0, y: 0 });
-  const hoverPull   = useRef(0);
-
-  // click-ripple state
-  const ripple      = useRef({ active: false, phase: 0, origin: new THREE.Vector3() });
+  const displayRef = useRef<THREE.Group>(null);
+  const screenRef = useRef<THREE.Mesh>(null);
+  const bodyMatRef = useRef<THREE.MeshPhysicalMaterial>(null);
+  const screenMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const glowLightRef = useRef<THREE.PointLight>(null);
+  const mood = useRef(MATERIAL_MOODS.home);
+  const hoverTarget = useRef({ x: 0, y: 0, z: 0 });
+  const hoverPull = useRef(0);
+  const pulse = useRef(0);
 
   useEffect(() => {
     mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
   }, [section]);
 
   useEffect(() => {
-    if (!hoverProject) { hoverTarget.current = { x: 0, y: 0 }; return; }
-    if (hoverProject === "nexus")      hoverTarget.current = { x: -0.7, y: 0.25 };
-    if (hoverProject === "inboxiq")    hoverTarget.current = { x:  0.0, y: 0.35 };
-    if (hoverProject === "pulseforge") hoverTarget.current = { x:  0.7, y: 0.25 };
+    if (!hoverProject) {
+      hoverTarget.current = { x: 0, y: 0, z: 0 };
+      return;
+    }
+    if (hoverProject === "nexus") hoverTarget.current = { x: -0.55, y: 0.18, z: 0.08 };
+    if (hoverProject === "inboxiq") hoverTarget.current = { x: 0, y: 0.3, z: 0.12 };
+    if (hoverProject === "pulseforge") hoverTarget.current = { x: 0.55, y: 0.18, z: 0.08 };
   }, [hoverProject]);
 
   // Mouse click → trigger ripple
   useEffect(() => {
     const onClick = () => {
-      ripple.current = {
-        active: true,
-        phase:  0,
-        origin: new THREE.Vector3(mouse.x * 1.15, -mouse.y * 1.15, 1.15),
-      };
+      pulse.current = 1;
     };
     window.addEventListener("pointerdown", onClick);
     return () => window.removeEventListener("pointerdown", onClick);
   }, []);
 
   useFrame((state) => {
-    const m = meshRef.current;
-    if (!m) return;
+    const root = rootRef.current;
+    const display = displayRef.current;
+    const screen = screenRef.current;
+    const bodyMat = bodyMatRef.current;
+    const screenMat = screenMatRef.current;
+    const glowLight = glowLightRef.current;
+    if (!root || !display || !screen || !bodyMat || !screenMat) return;
 
     const t = state.clock.getElapsedTime();
 
     // Smooth rotation – slightly responsive to mouse velocity for feel
-    m.rotation.y = t * 0.16 + mouse.vx * 0.8;
-    m.rotation.x = 0.22 + Math.sin(t * 0.32) * 0.04 + mouse.vy * 0.5;
+    pulse.current += (0 - pulse.current) * 0.09;
 
     hoverPull.current += ((hoverProject ? 1 : 0) - hoverPull.current) * 0.06;
 
-    const material = m.material as THREE.MeshPhysicalMaterial;
-
-    // Material interpolation
     const targetColor = new THREE.Color(mood.current.color);
-    material.color.lerp(targetColor, 0.04);
-    material.roughness          += (mood.current.roughness          - material.roughness)          * 0.04;
-    material.clearcoatRoughness += (mood.current.clearcoatRoughness - material.clearcoatRoughness) * 0.04;
-    material.envMapIntensity    += (mood.current.envIntensity        - material.envMapIntensity)    * 0.04;
-    material.roughness          += (-0.02 * hoverPull.current) * 0.02;
+    const accentColor = targetColor.clone().lerp(new THREE.Color("#8ec5ff"), 0.25);
 
-    const posAttr = geom.attributes.position as THREE.BufferAttribute;
-    const pos     = posAttr.array as Float32Array;
+    bodyMat.color.lerp(targetColor, 0.05);
+    bodyMat.roughness += (0.18 + mood.current.roughness * 0.35 - bodyMat.roughness) * 0.05;
+    bodyMat.clearcoatRoughness += (0.04 + mood.current.clearcoatRoughness * 0.4 - bodyMat.clearcoatRoughness) * 0.05;
+    bodyMat.envMapIntensity += (1.35 + mood.current.envIntensity * 0.2 - bodyMat.envMapIntensity) * 0.05;
 
-    const deform = mood.current.deform * (1 + hoverPull.current * 0.35);
-    const hx     = hoverTarget.current.x;
-    const hy     = hoverTarget.current.y;
+    screenMat.color.lerp(accentColor.clone().multiplyScalar(0.72), 0.08);
+    screenMat.emissive.lerp(accentColor, 0.08);
+    screenMat.emissiveIntensity += (0.6 + hoverPull.current * 0.45 + pulse.current * 0.55 - screenMat.emissiveIntensity) * 0.08;
 
-    // Advance ripple
-    if (ripple.current.active) {
-      ripple.current.phase += 0.08;
-      if (ripple.current.phase > Math.PI * 2) ripple.current.active = false;
+    if (glowLight) {
+      glowLight.color.copy(accentColor);
+      glowLight.intensity = 1.8 + hoverPull.current * 1.6 + pulse.current * 2.4;
+      glowLight.position.set(mouse.x * 0.42, 0.45 + mouse.y * 0.2, 0.5);
     }
 
-    for (let i = 0; i < pos.length; i += 3) {
-      const ox = base[i];
-      const oy = base[i + 1];
-      const oz = base[i + 2];
+    const sectionLift =
+      section === "projects" ? 0.1 :
+      section === "themes" ? 0.18 :
+      section === "experience" ? -0.04 :
+      section === "skills" ? 0.06 :
+      section === "contact" ? 0.14 : 0;
 
-      // Organic wave deformation
-      const w1 = Math.sin(ox * 2.2 + t * 1.15);
-      const w2 = Math.sin(oy * 2.0 - t * 0.95);
-      const w3 = Math.sin(oz * 2.4 + t * 0.85);
+    root.position.y = Math.sin(t * 0.7) * 0.08 + sectionLift;
+    root.position.x += ((hoverTarget.current.x + mouse.x * 0.12) - root.position.x) * 0.06;
+    root.position.z += ((hoverTarget.current.z + hoverPull.current * 0.05) - root.position.z) * 0.06;
 
-      // Mouse surface influence: vertices near mouse screen direction push more
-      const mouseBias = (ox * mouse.x + oy * -mouse.y) * 0.018;
+    root.rotation.y += ((-0.55 + t * 0.1 + mouse.x * 0.22 + hoverTarget.current.x * 0.25) - root.rotation.y) * 0.08;
+    root.rotation.x += ((0.16 + mouse.y * 0.12 + Math.sin(t * 0.45) * 0.03) - root.rotation.x) * 0.08;
+    root.rotation.z += ((-0.08 + Math.sin(t * 0.35) * 0.025 - mouse.x * 0.05) - root.rotation.z) * 0.08;
 
-      const dir  = ox * hx + oy * hy;
-      let   push = (w1 + w2 + w3) * deform + dir * 0.03 * hoverPull.current + mouseBias;
+    display.position.y += ((0.15 + hoverTarget.current.y * 0.35) - display.position.y) * 0.08;
+    display.rotation.x += ((1.95 + Math.sin(t * 0.65) * 0.05 + hoverPull.current * 0.08 + pulse.current * 0.06) - display.rotation.x) * 0.08;
+    display.rotation.y += ((mouse.x * 0.05) - display.rotation.y) * 0.08;
 
-      // Click ripple wave
-      if (ripple.current.active) {
-        const ro      = ripple.current.origin;
-        const dist    = Math.sqrt((ox - ro.x) ** 2 + (oy - ro.y) ** 2 + (oz - ro.z) ** 2);
-        const waveFront = ripple.current.phase * 1.2 - dist;
-        if (waveFront > -0.5 && waveFront < 1.0) {
-          const env = Math.max(0, 1 - Math.abs(waveFront - 0.25) / 0.75);
-          push += Math.sin(waveFront * Math.PI) * 0.06 * env;
-        }
-      }
-
-      const scale   = 1 + push;
-      pos[i]        = ox * scale;
-      pos[i + 1]    = oy * scale;
-      pos[i + 2]    = oz * scale;
-    }
-
-    posAttr.needsUpdate = true;
-    geom.computeVertexNormals();
+    const breathing = 1 + Math.sin(t * 1.4) * 0.008 + pulse.current * 0.02;
+    root.scale.setScalar(breathing);
+    screen.position.z = 0.043 + pulse.current * 0.004;
+    screen.scale.setScalar(1 + pulse.current * 0.015);
   });
 
   return (
-    <mesh ref={meshRef} geometry={geom} material={mat} position={[0, 0, 0]} />
+    <group ref={rootRef} position={[0, 0.02, 0]}>
+      <group position={[0, -0.62, -0.08]}>
+        <mesh position={[0, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.55, 0.08, 1.72]} />
+          <meshPhysicalMaterial
+            ref={bodyMatRef}
+            color={MATERIAL_MOODS.home.color}
+            metalness={1}
+            roughness={0.22}
+            clearcoat={1}
+            clearcoatRoughness={0.05}
+            envMapIntensity={1.45}
+          />
+        </mesh>
+
+        <mesh position={[0, 0.024, 0.07]}>
+          <boxGeometry args={[1.52, 0.01, 0.9]} />
+          <meshStandardMaterial color="#cfd3da" metalness={0.15} roughness={0.78} />
+        </mesh>
+
+        {Array.from({ length: 6 }).map((_, row) =>
+          Array.from({ length: 11 }).map((__, col) => (
+            <mesh
+              key={`${row}-${col}`}
+              position={[-0.92 + col * 0.184, 0.034, -0.42 + row * 0.14]}
+            >
+              <boxGeometry args={[0.11, 0.008, 0.09]} />
+              <meshStandardMaterial color="#d9dde3" metalness={0.2} roughness={0.7} />
+            </mesh>
+          ))
+        )}
+
+        <mesh position={[0.98, -0.005, 0]} rotation={[0, 0, 0.08]}>
+          <cylinderGeometry args={[0.045, 0.045, 1.66, 32]} />
+          <meshStandardMaterial color="#b9bec8" metalness={0.9} roughness={0.28} />
+        </mesh>
+      </group>
+
+      <group ref={displayRef} position={[0, 0.16, -0.88]} rotation={[1.95, 0, 0]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[2.42, 1.58, 0.08]} />
+          <meshPhysicalMaterial
+            color="#c7ccd5"
+            metalness={1}
+            roughness={0.2}
+            clearcoat={1}
+            clearcoatRoughness={0.05}
+            envMapIntensity={1.25}
+          />
+        </mesh>
+
+        <mesh ref={screenRef} position={[0, 0.02, 0.043]}>
+          <planeGeometry args={[2.16, 1.34]} />
+          <meshStandardMaterial
+            ref={screenMatRef}
+            color="#7ea3c7"
+            emissive="#a7d0ff"
+            emissiveIntensity={0.7}
+            roughness={0.2}
+            metalness={0.05}
+          />
+        </mesh>
+
+        <mesh position={[0, -0.01, 0.045]}>
+          <planeGeometry args={[2.02, 1.2]} />
+          <meshBasicMaterial transparent opacity={0.22} color="#ffffff" />
+        </mesh>
+
+        <mesh position={[0, 0.77, 0.042]}>
+          <circleGeometry args={[0.03, 24]} />
+          <meshStandardMaterial color="#141414" roughness={0.8} />
+        </mesh>
+
+        <pointLight
+          ref={glowLightRef}
+          color="#b8d7ff"
+          intensity={2}
+          distance={5}
+          decay={2}
+          position={[0, 0.45, 0.5]}
+        />
+      </group>
+    </group>
   );
 }
 
