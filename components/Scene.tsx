@@ -9,6 +9,7 @@ import {
   Float,
   MeshTransmissionMaterial,
   Sparkles,
+  useGLTF,
 } from "@react-three/drei";
 import { useSceneState } from "@/components/SceneState";
 import * as THREE from "three";
@@ -30,6 +31,7 @@ type FlowSpec = {
   from: string;
   to: string;
 };
+
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -249,7 +251,7 @@ function OrbitLights() {
       );
       // intensity pulses very subtly with mouse speed
       const speed = Math.sqrt(mouse.vx ** 2 + mouse.vy ** 2);
-      light1Ref.current.intensity = 2.2 + speed * 6;
+      light1Ref.current.intensity = 0.95 + speed * 1.4;
     }
 
     // Cool rim light – slower counter-orbit
@@ -274,11 +276,11 @@ function OrbitLights() {
   return (
     <>
       {/* warm key */}
-      <pointLight ref={light1Ref} color="#ffe8c8" intensity={2.2} distance={12} decay={2} />
+      <pointLight ref={light1Ref} color="#ffe8c8" intensity={0.95} distance={9} decay={2} />
       {/* cool rim */}
-      <pointLight ref={light2Ref} color="#a0d8ff" intensity={1.4} distance={10} decay={2} />
+      <pointLight ref={light2Ref} color="#a0d8ff" intensity={0.55} distance={8} decay={2} />
       {/* fill */}
-      <pointLight ref={light3Ref} color="#ffffff" intensity={0.6} distance={8}  decay={2} />
+      <pointLight ref={light3Ref} color="#ffffff" intensity={0.18} distance={6}  decay={2} />
     </>
   );
 }
@@ -354,19 +356,34 @@ function HeroObject({ section }: { section: string }) {
   const { hoverProject } = useSceneState();
   const rootRef = useRef<THREE.Group>(null);
 
-  const displayRef = useRef<THREE.Group>(null);
-  const screenRef = useRef<THREE.Mesh>(null);
-  const bodyMatRef = useRef<THREE.MeshPhysicalMaterial>(null);
-  const screenMatRef = useRef<THREE.MeshStandardMaterial>(null);
-  const glowLightRef = useRef<THREE.PointLight>(null);
-  const mood = useRef(MATERIAL_MOODS.home);
+  const modelRef = useRef<THREE.Group>(null);
   const hoverTarget = useRef({ x: 0, y: 0, z: 0 });
   const hoverPull = useRef(0);
   const pulse = useRef(0);
+  const gltf = useGLTF("/models/macbook.glb");
+
+  const heroScene = useMemo(() => {
+    const scene = gltf.scene.clone(true);
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    const maxAxis = Math.max(size.x, size.y, size.z) || 1;
+    const scale = 3.2 / maxAxis;
+    scene.scale.setScalar(scale);
+    scene.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+    return scene;
+  }, [gltf.scene]);
 
   useEffect(() => {
-    mood.current = MATERIAL_MOODS[section] ?? MATERIAL_MOODS.home;
-  }, [section]);
+    heroScene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+  }, [heroScene]);
 
   useEffect(() => {
     if (!hoverProject) {
@@ -389,12 +406,8 @@ function HeroObject({ section }: { section: string }) {
 
   useFrame((state) => {
     const root = rootRef.current;
-    const display = displayRef.current;
-    const screen = screenRef.current;
-    const bodyMat = bodyMatRef.current;
-    const screenMat = screenMatRef.current;
-    const glowLight = glowLightRef.current;
-    if (!root || !display || !screen || !bodyMat || !screenMat) return;
+    const model = modelRef.current;
+    if (!root || !model) return;
 
     const t = state.clock.getElapsedTime();
 
@@ -402,24 +415,6 @@ function HeroObject({ section }: { section: string }) {
     pulse.current += (0 - pulse.current) * 0.09;
 
     hoverPull.current += ((hoverProject ? 1 : 0) - hoverPull.current) * 0.06;
-
-    const targetColor = new THREE.Color(mood.current.color);
-    const accentColor = targetColor.clone().lerp(new THREE.Color("#8ec5ff"), 0.25);
-
-    bodyMat.color.lerp(targetColor, 0.05);
-    bodyMat.roughness += (0.18 + mood.current.roughness * 0.35 - bodyMat.roughness) * 0.05;
-    bodyMat.clearcoatRoughness += (0.04 + mood.current.clearcoatRoughness * 0.4 - bodyMat.clearcoatRoughness) * 0.05;
-    bodyMat.envMapIntensity += (1.35 + mood.current.envIntensity * 0.2 - bodyMat.envMapIntensity) * 0.05;
-
-    screenMat.color.lerp(accentColor.clone().multiplyScalar(0.72), 0.08);
-    screenMat.emissive.lerp(accentColor, 0.08);
-    screenMat.emissiveIntensity += (0.6 + hoverPull.current * 0.45 + pulse.current * 0.55 - screenMat.emissiveIntensity) * 0.08;
-
-    if (glowLight) {
-      glowLight.color.copy(accentColor);
-      glowLight.intensity = 1.8 + hoverPull.current * 1.6 + pulse.current * 2.4;
-      glowLight.position.set(mouse.x * 0.42, 0.45 + mouse.y * 0.2, 0.5);
-    }
 
     const sectionLift =
       section === "projects" ? 0.1 :
@@ -436,98 +431,18 @@ function HeroObject({ section }: { section: string }) {
     root.rotation.x += ((0.16 + mouse.y * 0.12 + Math.sin(t * 0.45) * 0.03) - root.rotation.x) * 0.08;
     root.rotation.z += ((-0.08 + Math.sin(t * 0.35) * 0.025 - mouse.x * 0.05) - root.rotation.z) * 0.08;
 
-    display.position.y += ((0.15 + hoverTarget.current.y * 0.35) - display.position.y) * 0.08;
-    display.rotation.x += ((1.95 + Math.sin(t * 0.65) * 0.05 + hoverPull.current * 0.08 + pulse.current * 0.06) - display.rotation.x) * 0.08;
-    display.rotation.y += ((mouse.x * 0.05) - display.rotation.y) * 0.08;
+    model.position.y += ((0.04 + hoverTarget.current.y * 0.3) - model.position.y) * 0.08;
+    model.rotation.x += ((0.06 + mouse.y * 0.05 + hoverPull.current * 0.03) - model.rotation.x) * 0.08;
+    model.rotation.y += ((-0.12 + mouse.x * 0.05 + pulse.current * 0.03) - model.rotation.y) * 0.08;
 
     const breathing = 1 + Math.sin(t * 1.4) * 0.008 + pulse.current * 0.02;
     root.scale.setScalar(breathing);
-    screen.position.z = 0.043 + pulse.current * 0.004;
-    screen.scale.setScalar(1 + pulse.current * 0.015);
   });
 
   return (
     <group ref={rootRef} position={[0, 0.02, 0]}>
-      <group position={[0, -0.62, -0.08]}>
-        <mesh position={[0, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[2.55, 0.08, 1.72]} />
-          <meshPhysicalMaterial
-            ref={bodyMatRef}
-            color={MATERIAL_MOODS.home.color}
-            metalness={1}
-            roughness={0.22}
-            clearcoat={1}
-            clearcoatRoughness={0.05}
-            envMapIntensity={1.45}
-          />
-        </mesh>
-
-        <mesh position={[0, 0.024, 0.07]}>
-          <boxGeometry args={[1.52, 0.01, 0.9]} />
-          <meshStandardMaterial color="#cfd3da" metalness={0.15} roughness={0.78} />
-        </mesh>
-
-        {Array.from({ length: 6 }).map((_, row) =>
-          Array.from({ length: 11 }).map((__, col) => (
-            <mesh
-              key={`${row}-${col}`}
-              position={[-0.92 + col * 0.184, 0.034, -0.42 + row * 0.14]}
-            >
-              <boxGeometry args={[0.11, 0.008, 0.09]} />
-              <meshStandardMaterial color="#d9dde3" metalness={0.2} roughness={0.7} />
-            </mesh>
-          ))
-        )}
-
-        <mesh position={[0.98, -0.005, 0]} rotation={[0, 0, 0.08]}>
-          <cylinderGeometry args={[0.045, 0.045, 1.66, 32]} />
-          <meshStandardMaterial color="#b9bec8" metalness={0.9} roughness={0.28} />
-        </mesh>
-      </group>
-
-      <group ref={displayRef} position={[0, 0.16, -0.88]} rotation={[1.95, 0, 0]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[2.42, 1.58, 0.08]} />
-          <meshPhysicalMaterial
-            color="#c7ccd5"
-            metalness={1}
-            roughness={0.2}
-            clearcoat={1}
-            clearcoatRoughness={0.05}
-            envMapIntensity={1.25}
-          />
-        </mesh>
-
-        <mesh ref={screenRef} position={[0, 0.02, 0.043]}>
-          <planeGeometry args={[2.16, 1.34]} />
-          <meshStandardMaterial
-            ref={screenMatRef}
-            color="#7ea3c7"
-            emissive="#a7d0ff"
-            emissiveIntensity={0.7}
-            roughness={0.2}
-            metalness={0.05}
-          />
-        </mesh>
-
-        <mesh position={[0, -0.01, 0.045]}>
-          <planeGeometry args={[2.02, 1.2]} />
-          <meshBasicMaterial transparent opacity={0.22} color="#ffffff" />
-        </mesh>
-
-        <mesh position={[0, 0.77, 0.042]}>
-          <circleGeometry args={[0.03, 24]} />
-          <meshStandardMaterial color="#141414" roughness={0.8} />
-        </mesh>
-
-        <pointLight
-          ref={glowLightRef}
-          color="#b8d7ff"
-          intensity={2}
-          distance={5}
-          decay={2}
-          position={[0, 0.45, 0.5]}
-        />
+      <group ref={modelRef} position={[0, -0.2, 0]} rotation={[0.06, -0.12, 0]}>
+        <primitive object={heroScene} />
       </group>
     </group>
   );
@@ -1024,19 +939,19 @@ export default function Scene() {
           : "blur-0 brightness-100 saturate-100"
       }`}
     >
-      <Canvas dpr={[1, 2]} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}>
+      <Canvas dpr={[1, 2]} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.78 }}>
         <CameraRig />
 
         {/* Base lighting */}
-        <ambientLight intensity={0.18} />
-        <directionalLight position={[3,  4,  2]} intensity={0.9} />
-        <directionalLight position={[-4, -2, 3]} intensity={0.4} />
+        <ambientLight intensity={0.07} />
+        <directionalLight position={[3,  4,  2]} intensity={0.45} />
+        <directionalLight position={[-4, -2, 3]} intensity={0.18} />
 
         {/* Dynamic orbit lights */}
         <OrbitLights />
 
         <Suspense fallback={null}>
-          <Environment preset="city" />
+          <Environment preset="studio" />
         </Suspense>
 
         {/* Depth particle field */}
